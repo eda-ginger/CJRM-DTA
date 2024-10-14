@@ -214,11 +214,16 @@ def integer_label_protein(sequence, max_length=1200):
         sequence (str): Protein string sequence.
         max_length: Maximum encoding length of input protein string.
     """
+    if tp == 'smiles':
+        max_length = 100
+        charset = CHARPROTSET
+    max_length =
+
     encoding = np.zeros(max_length)
     for idx, letter in enumerate(sequence[:max_length]):
         try:
             letter = letter.upper()
-            encoding[idx] = CHARPROTSET[letter]
+            encoding[idx] = [letter]
         except KeyError:
             logger.warning(
                 f"character {letter} does not exists in sequence category encoding, skip and treat as " f"padding."
