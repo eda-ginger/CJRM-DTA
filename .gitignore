@@ -338,7 +338,7 @@ stderr
 cached
 targets.py
 smiles_stats.py
-run.py
+CJRM.py
 
 # shell scripts
 *.sh

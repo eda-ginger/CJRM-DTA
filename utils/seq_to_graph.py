@@ -1,3 +1,14 @@
+########################################################################################################################
+########## Sources
+########################################################################################################################
+
+# https://github.com/microsoft/Drug-Interaction-Research/tree/DSN-DDI-for-DDI-Prediction
+# https://github.com/JK-Liu7/AttentionMGT-DTA/tree/main
+
+########################################################################################################################
+########## Import
+########################################################################################################################
+
 import torch
 import numpy as np
 from rdkit import Chem
@@ -6,6 +17,10 @@ from torch_geometric.data import Data
 
 import logging
 logger = logging.getLogger(__name__)
+
+import warnings
+warnings.filterwarnings('ignore', category=FutureWarning)
+warnings.filterwarnings('ignore', category=UserWarning)
 
 
 def one_of_k_encoding_unk(x, allowable_set):
@@ -67,15 +82,14 @@ def drug_to_graph(smi):
         return Data(x=n_features, edge_index=edge_index)
 
 
-def protein_to_graph(protein, dn, prot_inform):
-    key, seq = protein
-    fd = Path(f'TDC/DTA/{dn}/protein_graph_pyg')
+def protein_to_graph(protein, pfd, prot_inform):
+    seq, key = protein
     find_idx = prot_inform.index[prot_inform.eq(key).any(axis=1)]
     if not find_idx.empty:
         find_row = prot_inform.loc[find_idx, :].to_dict('records')[0]
         if seq == find_row['Seq']:
             for k, v in find_row.items():
                 if k != 'Seq':
-                    file = fd / f"{v}.pt"
+                    file = pfd / f"{v}.pt"
                     if file.is_file():
                         return torch.load(file)

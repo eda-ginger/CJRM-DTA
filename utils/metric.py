@@ -166,6 +166,16 @@ def f1_score(y_true, y_pred):
     return fs
 
 
+def cal_perform(real, pred, dt_name):
+    result = {'Set': dt_name}
+    real = real.numpy().flatten()
+    pred = pred.numpy().flatten()
+    lfs = {'RM2': rm2, 'CI': ci, 'MSE': mse, 'RMSE': rmse, 'Pearson': pearson, 'Spearman': spearman}
+    for lfn, lf in lfs.items():
+        result[lfn] = f"{round(lf(real, pred), 4):.4f}"
+    return result
+
+
 auc_score = roc_auc_score
 kappa_score = cohen_kappa_score
 aupr = average_precision_score
@@ -179,6 +189,10 @@ if __name__ == '__main__':
     prec = precision(y_true, y_pred)
     reca = recall(y_true, y_pred)
     fs = f1_score(y_true, y_pred)
+
+    # y_true = torch.tensor([1, 1, 1, 0, 0, 0, 0, 1])
+    # y_pred = torch.tensor([1, 1, 0, 1, 0, 1, 0, 1])
+    # cal_perform(y_true, y_pred, dt_name='test')
 
     print(sens)
     print(spec)
