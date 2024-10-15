@@ -60,9 +60,9 @@ cmd_lst = ['--data ./data/preprocesseed/DAVIS/random --d1_type seq --d2_type seq
 import time
 for command in cmd_lst:
     start = time.time()
-    finish(f'\nstarting {command}\n')
+    finish(f'\nstarting {command}\n - server gpu 0')
     subprocess.run(args=[sys.executable, 'CJRM.py'] + split(command))
 
     f_time = time.strftime("%H:%M:%S", time.gmtime(time.time() - start))
-    finish(f'\nFinished: {command}\nLearning time: {f_time}')
+    finish(f'\nFinished: {command}\nLearning time: {f_time} - server gpu 0')
 finish(f'\nAll job finished successfully!')
