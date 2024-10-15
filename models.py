@@ -140,8 +140,7 @@ class GnS(torch.nn.Module):
         # protein
         embedded_xt = self.embedding_xt(xt)
         conv_xt = self.conv_xt_1(embedded_xt)
-        xt = conv_xt.view(-1, 32 * 121)
-        xt = self.fc1_xt(xt)
+        xt = self.fc1_xt(conv_xt.view(-1, 32 * 121))
 
         # joint
         xj = torch.cat((xd, xt), 1)
