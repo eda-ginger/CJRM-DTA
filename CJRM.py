@@ -118,8 +118,6 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--data', type=str, required=True, help='dataset')
-    parser.add_argument('--d1_col', type=str, required=True, help='data1 column name')
-    parser.add_argument('--d2_col', type=str, required=True, help='data2 column name')
     parser.add_argument('--d1_type', type=str, required=True, help='data1 type')
     parser.add_argument('--d2_type', type=str, required=True, help='data2 type')
     parser.add_argument('--data_name', type=str, required=True, help='dataset name')
@@ -136,8 +134,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     data_folder = Path(args.data)
-    d1_col = args.d1_col
-    d2_col = args.d2_col
     d1_type = args.d1_type
     d2_type = args.d2_type
     data_name = args.data_name
