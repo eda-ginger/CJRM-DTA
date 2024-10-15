@@ -11,9 +11,7 @@
 
 import time
 import copy
-import utils
 import torch
-import models
 import logging
 import warnings
 import argparse
@@ -23,7 +21,9 @@ from torch import optim
 from pathlib import Path
 from datetime import date
 import torch.nn.functional as F
+from torch_geometric.data import Data
 
+from models import *
 from utils.metric import *
 from utils.helper import *
 from utils.seq_to_vec import integer_label_string
@@ -56,9 +56,9 @@ def train(model, device, train_loader, loss_fn, optimizer, epoch, scheduler=None
     train_reals = torch.Tensor()
     for batch_idx, data in enumerate(train_loader):
 
-        data = [d.to(device) for d in data]
+        data = data.to(device)
 
-        processed_data += len(data[0])
+        processed_data += len(data)
         optimizer.zero_grad()
 
         pred, real = model(data)
@@ -124,12 +124,9 @@ if __name__ == '__main__':
     parser.add_argument('--d1_type', type=str, required=True, help='data1 type')
     parser.add_argument('--d2_type', type=str, required=True, help='data2 type')
     parser.add_argument('--data_name', type=str, required=True, help='dataset name')
-    parser.add_argument('--task_name', type=str, required=True, help='task (DTA or PPI)')
     parser.add_argument('--project_name', type=str, required=True, help='project name')
-    parser.add_argument('--architecture', type=str, required=True, help='choose architecture (DSN, DSN-joint)')
+    parser.add_argument('--joint', type=str, required=True, help='choose joint method')
 
-    parser.add_argument('--n_atom_feats', type=int, default=55, help='num of input features')
-    parser.add_argument('--n_atom_hid', type=int, default=128, help='num of hidden features')
     parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
     parser.add_argument('--n_epochs', type=int, default=200, help='num of epochs')
     parser.add_argument('--n_workers', type=int, default=1, help='num of workers for dataset')
@@ -145,18 +142,15 @@ if __name__ == '__main__':
     d1_type = args.d1_type
     d2_type = args.d2_type
     data_name = args.data_name
-    task_name = args.task_name
     project_name = args.project_name
-    architecture = args.architecture
+    joint = args.joint
 
-    n_atom_feats = args.n_atom_feats
-    n_atom_hid = args.n_atom_hid
     lr = args.lr
     n_epochs = args.n_epochs
     n_workers = args.n_workers
     batch_size = args.batch_size
-
     weight_decay = args.weight_decay
+
     device = f'cuda:{args.use_cuda}' if torch.cuda.is_available() else 'cpu'
 
     ####################################################################################################################
@@ -164,10 +158,9 @@ if __name__ == '__main__':
     ####################################################################################################################
 
     # # # tmp
-    # data_folder = Path('./TDC/DTA/DAVIS/random')
-    # d1_type, d2_type = 'seq', 'seq'
+    # data_folder = Path('./data/preprocessed/DAVIS/random')
+    # d1_type, d2_type = 'graph', 'graph'
     # data_name = 'davis'
-    # task_name = 'DTA'
     # project_name = 'Test1'
     # architecture = 'DSN'
     # batch_size = 12
@@ -179,6 +172,7 @@ if __name__ == '__main__':
     # n_epochs = 2
     # kge_dim = 128
     # n_workers = 1
+    # joint = 'concat'
 
     # output path
     today = str(date.today()).replace('-', '')
@@ -190,22 +184,21 @@ if __name__ == '__main__':
     # log path
     log_fd = Path(output_folder / 'logs')
     log_fd.mkdir(parents=True, exist_ok=True)
-    utils.set_log(log_fd, f'models.log')
+    set_log(log_fd, f'models.log')
     logger.info('Dual-View-Expansion experiments...')
     logger.info(f'data_folder: {data_folder}')
     logger.info(f'd1_type: {d1_type}, d2_type: {d2_type}')
     logger.info(f'data_name: {data_name}')
-    logger.info(f'task_name: {task_name}')
     logger.info(f'project_name: {project_name}')
-    logger.info(f'architecture: {architecture}')
-    logger.info(f'batch_size: {batch_size}')
+    logger.info(f'joint method: {joint}')
+
     logger.info(f'lr: {lr}')
-    logger.info(f'device: {device}')
-    logger.info(f'weight_decay: {weight_decay}')
-    logger.info(f'n_atom_feats: {n_atom_feats}')
-    logger.info(f'n_atom_hid: {n_atom_hid}')
     logger.info(f'n_workers: {n_workers}')
     logger.info(f'n_epochs: {n_epochs}')
+    logger.info(f'batch_size: {batch_size}')
+    logger.info(f'weight_decay: {weight_decay}')
+
+    logger.info(f'device: {device}')
 
     # load dataset
     df_trn = pd.read_csv(data_folder / 'train.csv')
@@ -220,22 +213,39 @@ if __name__ == '__main__':
 
     # preprocess
     if d1_type == 'seq':
-        df_total['d1'] = df_total['Drug'].progress_apply(integer_label_string)
+        df_total['d1'] = df_total['Drug'].progress_apply(lambda x: integer_label_string(x, 'drug'))
     elif d1_type == 'graph':
         df_total['d1'] = df_total['Drug'].progress_apply(drug_to_graph)
     else:
         raise Exception('d1_type must be either seq or graph')
 
     if d2_type == 'seq':
-        df_total['d2'] = df_total['Target'].progress_apply(integer_label_string)
+        df_total['d2'] = df_total['Target'].progress_apply(lambda x: integer_label_string(x, 'protein'))
     elif d2_type == 'graph':
-        p_fd = Path(f'TDC/DTA/{data_name}/protein_graph_pyg')
+        p_fd = Path(f'data/preprocessed/{data_name}/protein_graph_pyg')
         p_inform = pd.read_csv(p_fd / f"{data_name}_prot.csv")
         df_total['d2'] = df_total[['Target', 'Target_ID']].progress_apply(
             lambda x: protein_to_graph(x, p_fd, p_inform), axis=1)
     else:
         raise Exception('d2_type must be either seq or graph')
 
+    # make data
+    if d1_type == 'seq' and d2_type == 'seq':
+        df_total['data'] = df_total[['d1', 'd2', 'Y']].progress_apply(
+            lambda x: Data(xd=x[0], xt=x[1], y=x[2]), axis=1)
+    elif d1_type == 'seq' and d2_type == 'graph':
+        df_total['data'] = df_total[['d1', 'd2', 'Y']].progress_apply(
+            lambda x: Data(xd=x[0], xt=x[1].x, xt_ei=x[1].edge_index, y=x[2]), axis=1)
+    elif d1_type == 'graph' and d2_type == 'seq':
+        df_total['data'] = df_total[['d1', 'd2', 'Y']].progress_apply(
+            lambda x: Data(xd=x[0].x, xd_ei=x[0].edge_index, xt=x[1], y=x[2]), axis=1)
+    elif d1_type == 'graph' and d2_type == 'graph':
+        df_total['data'] = df_total[['d1', 'd2', 'Y']].progress_apply(
+            lambda x: Data(xd=x[0].x, xd_ei=x[0].edge_index, xt=x[1].x, xt_ei=x[1].edge_index, y=x[2]), axis=1)
+    else:
+        raise Exception('type must be either seq or graph')
+
+    # save
     save_cols = [c for c in df_total.columns if c not in ['d1', 'd2']]
     df_total[save_cols].to_csv(output_folder / f'{project_name}_data.csv', index=False, header=True)
     logger.info(f'Prepare the data: {len(df_total)}')
@@ -244,9 +254,9 @@ if __name__ == '__main__':
     df_val = df_total[df_total['Set'] == 'val']
     df_tst = df_total[df_total['Set'] == 'tst']
 
-    trn_tup = [(h, t, l) for h, t, l in zip(df_trn['d1'], df_trn['d2'], df_trn['Y'])]
-    val_tup = [(h, t, l) for h, t, l in zip(df_val['d1'], df_val['d2'], df_val['Y'])]
-    tst_tup = [(h, t, l) for h, t, l in zip(df_tst['d1'], df_tst['d2'], df_tst['Y'])]
+    trn_tup = df_trn['data'].tolist()
+    val_tup = df_val['data'].tolist()
+    tst_tup = df_tst['data'].tolist()
 
     # start
     start = time.time()
@@ -254,32 +264,44 @@ if __name__ == '__main__':
     seeds = [5, 42, 76]
     for seed in seeds:
         logger.info(f"#####" * 20)
+        train_time = time.time()
         set_random_seeds(seed)
 
         # Define DataLoader
-        trn_dataset = CustomDataset(trn_tup, shuffle=True)
+        trn_dataset = CustomDataset(trn_tup)
         val_dataset = CustomDataset(val_tup)
         tst_dataset = CustomDataset(tst_tup)
-        # trn_dataset = CustomDataset(trn_tup[:12], shuffle=True)
+        # trn_dataset = CustomDataset(trn_tup[:12])
         # val_dataset = CustomDataset(val_tup[:12])
         # tst_dataset = CustomDataset(tst_tup[:12])
         logger.info(f"TRN: {len(trn_dataset)}, VAL: {len(val_dataset)}, TST: {len(tst_dataset)}")
 
         trn_loader = CustomDataLoader(trn_dataset, batch_size=batch_size, shuffle=True,
-                                      worker_init_fn=utils.seed_worker, num_workers=n_workers)
+                                      worker_init_fn=seed_worker, num_workers=n_workers)
         val_loader = CustomDataLoader(val_dataset, batch_size=(batch_size * 3),
-                                      worker_init_fn=utils.seed_worker, num_workers=n_workers)
+                                      worker_init_fn=seed_worker, num_workers=n_workers)
         tst_loader = CustomDataLoader(tst_dataset, batch_size=(batch_size * 3),
-                                      worker_init_fn=utils.seed_worker, num_workers=n_workers)
+                                      worker_init_fn=seed_worker, num_workers=n_workers)
+
+        # for batch in trn_loader:
+        #     break
 
         # Define model
-        model = models.MVN_DDI(n_atom_feats, n_atom_hid, kge_dim, heads_out_feat_params=[64, 64, 64, 64],
-                               blocks_params=[2, 2, 2, 2], arch=architecture)
-
-        model.to(device)
+        if d1_type == 'seq' and d2_type == 'seq':
+            model = SnS()
+        elif d1_type == 'seq' and d2_type == 'graph':
+            model = SnG()
+        elif d1_type == 'graph' and d2_type == 'seq':
+            model = GnS()
+        elif d1_type == 'graph' and d2_type == 'graph':
+            model = GnG()
+        else:
+            raise Exception('type must be either seq or graph')
 
         logger.info(f'Model:\n{model}')
         logger.info(f'Model params: {sum(p.numel() for p in model.parameters())}')
+
+        model.to(device)
         loss_fn = F.mse_loss
         optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
         scheduler = optim.lr_scheduler.LambdaLR(optimizer, lambda epoch: 0.96 ** (epoch)) # on? off?
@@ -311,6 +333,7 @@ if __name__ == '__main__':
             else:
                 logger.info(f"(seed: {seed}) No improvement since epoch {best_epoch}; best loss: {best_loss}")
 
+        train_runtime = float(f"{(time.time() - train_time) / 60:.3f}")
         torch.save(model_state, model_folder / f'CJRM_{project_name}_seed{seed}_best.pt')
 
         trn_perform = model_results['trn']
@@ -319,9 +342,9 @@ if __name__ == '__main__':
         performs = pd.DataFrame([trn_perform, val_perform, tst_perform])
 
         performs['Seed'] = seed
-        performs['Task'] = task_name
         performs['Project'] = project_name
         performs['Best_epoch'] = best_epoch
+        performs['Time (min)'] = train_runtime
         performs.to_csv(model_folder / f'CJRM_{project_name}_seed{seed}_best.csv', header=True, index=False)
         total_results.append(performs)
 
@@ -334,19 +357,22 @@ if __name__ == '__main__':
 
     # summary - 분산도 필요
     mean_row = []
-    for group in total_df.groupby(by=['Set', 'Task', 'Project']):
-        row_dict = {'Set': group[0][0], 'Task': group[0][1], 'Project': group[0][2]}
+    for group in total_df.groupby(by=['Set', 'Project']):
+        row_dict = {'Set': group[0][0], 'Project': group[0][1]}
         for k, v in group[1].mean(numeric_only=True).to_dict().items():
             if k == 'Seed':
-                row_dict['Seeds'] = len(group[1])
+                row_dict['Seeds'] = ', '.join(map(str, group[1]['Seed'].tolist()))
                 continue
             elif k == 'Best_epoch':
-                v = int(np.ceil(v))
-            row_dict[k] = v
+                row_dict[k] = int(np.ceil(v))
+            else:
+                v_std = round(group[1].std(numeric_only=True)[k], 2).item()
+                v = f"{v:.4f} (± {v_std:.2f})"
+                row_dict[k] = v
         mean_row.append(row_dict)
 
     summary = pd.DataFrame(mean_row)
-    summary.to_csv(output_folder / f'{task_name}_{project_name}_summary.csv', index=False, header=True)
+    summary.to_csv(output_folder / f'CJRM_{project_name}_summary.csv', index=False, header=True)
 
     # finish
     runtime = time.strftime("%H:%M:%S", time.gmtime(time.time() - start))

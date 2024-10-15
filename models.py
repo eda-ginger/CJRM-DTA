@@ -1,167 +1,335 @@
+########################################################################################################################
+########## Sources
+########################################################################################################################
+
+# https://github.com/thinng/GraphDTA
+
+########################################################################################################################
+########## Import
+########################################################################################################################
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import Sequential, Linear, ReLU
 from torch_geometric.nn import GINConv, global_add_pool
-from torch_geometric.nn import global_mean_pool as gap, global_max_pool as gmp
 
-# GINConv model
-class GINConvNet(torch.nn.Module):
-    def __init__(self, n_output=1,num_features_xd=78, num_features_xt=25,
-                 n_filters=32, embed_dim=128, output_dim=128, dropout=0.2):
+########################################################################################################################
+########## Models
+########################################################################################################################
 
-        super(GINConvNet, self).__init__()
 
-        dim = 32
-        self.dropout = nn.Dropout(dropout)
-        self.relu = nn.ReLU()
-        self.n_output = n_output
-        # convolution layers
-        nn1 = Sequential(Linear(num_features_xd, dim), ReLU(), Linear(dim, dim))
-        self.conv1 = GINConv(nn1)
-        self.bn1 = torch.nn.BatchNorm1d(dim)
-
-        nn2 = Sequential(Linear(dim, dim), ReLU(), Linear(dim, dim))
-        self.conv2 = GINConv(nn2)
-        self.bn2 = torch.nn.BatchNorm1d(dim)
-
-        nn3 = Sequential(Linear(dim, dim), ReLU(), Linear(dim, dim))
-        self.conv3 = GINConv(nn3)
-        self.bn3 = torch.nn.BatchNorm1d(dim)
-
-        nn4 = Sequential(Linear(dim, dim), ReLU(), Linear(dim, dim))
-        self.conv4 = GINConv(nn4)
-        self.bn4 = torch.nn.BatchNorm1d(dim)
-
-        nn5 = Sequential(Linear(dim, dim), ReLU(), Linear(dim, dim))
-        self.conv5 = GINConv(nn5)
-        self.bn5 = torch.nn.BatchNorm1d(dim)
-
-        self.fc1_xd = Linear(dim, output_dim)
-
-        # 1D convolution on protein sequence
-        self.embedding_xt = nn.Embedding(num_features_xt + 1, embed_dim)
-        self.conv_xt_1 = nn.Conv1d(in_channels=1000, out_channels=n_filters, kernel_size=8)
-        self.fc1_xt = nn.Linear(32*121, output_dim)
-
-        # combined layers
-        self.fc1 = nn.Linear(256, 1024)
-        self.fc2 = nn.Linear(1024, 256)
-        self.out = nn.Linear(256, self.n_output)        # n_output = 1 for regression task
-
-    def forward(self, data):
-        x, edge_index, batch = data.x, data.edge_index, data.batch
-        target = data.target
-
-        x = F.relu(self.conv1(x, edge_index))
-        x = self.bn1(x)
-        x = F.relu(self.conv2(x, edge_index))
-        x = self.bn2(x)
-        x = F.relu(self.conv3(x, edge_index))
-        x = self.bn3(x)
-        x = F.relu(self.conv4(x, edge_index))
-        x = self.bn4(x)
-        x = F.relu(self.conv5(x, edge_index))
-        x = self.bn5(x)
-        x = global_add_pool(x, batch)
-        x = F.relu(self.fc1_xd(x))
-        x = F.dropout(x, p=0.2, training=self.training)
-
-        embedded_xt = self.embedding_xt(target)
-        conv_xt = self.conv_xt_1(embedded_xt)
-
-        # flatten
-        xt = conv_xt.view(-1, 32 * 121)
-        xt = self.fc1_xt(xt)
-
-        # concat
-        xc = torch.cat((x, xt), 1)
-        # add some dense layers
-        xc = self.fc1(xc)
-        xc = self.relu(xc)
-        xc = self.dropout(xc)
-        xc = self.fc2(xc)
-        xc = self.relu(xc)
-        xc = self.dropout(xc)
-        out = self.out(xc)
-        return out
-
+# d1 (seq) & d2 (seq)
 class SnS(torch.nn.Module):
-    def __init__(self, n_output=1,num_features_xd=78, num_features_xt=25,
+    def __init__(self, n_output=1, num_features_xd=64, num_features_xt=25,
                  n_filters=32, embed_dim=128, output_dim=128, dropout=0.2):
 
         super(SnS, self).__init__()
 
+        # 1D convolution on smiles sequence
+        self.embedding_xd = nn.Embedding(num_features_xd + 1, embed_dim)
+        self.conv_xd_1 = nn.Conv1d(in_channels=150, out_channels=n_filters, kernel_size=8)
+
+        # 1D convolution on protein sequence
+        self.embedding_xt = nn.Embedding(num_features_xt + 1, embed_dim)
+        self.conv_xt_1 = nn.Conv1d(in_channels=1000, out_channels=n_filters, kernel_size=8)
+
+        self.fc1 = nn.Linear(32 * 121, output_dim)
+
+        # dense
+        self.classifier = nn.Sequential(
+            nn.Linear(256, 1024),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(1024, 256),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(256, n_output),
+        )
+
+    def forward(self, data):
+        xd, xt = data.xd, data.xt
+
+        # drug
+        embedded_xd = self.embedding_x(xd)
+        conv_xd = self.conv_x_1(embedded_xd)
+        xd = self.fc1(conv_xd.view(-1, 32 * 121))
+
+        # protein
+        embedded_xt = self.embedding_xt(xt)
+        conv_xt = self.conv_xt_1(embedded_xt)
+        xt = self.fc1(conv_xt.view(-1, 32 * 121))
+
+        # joint
+        xj = torch.cat((xd, xt), 1)
+
+        # dense
+        out = self.classifier(xj)
+        return out
+
+
+# d1 (graph) & d2 (seq)
+class GnS(torch.nn.Module):
+    def __init__(self, n_output=1, num_features_xd=55, num_features_xt=25,
+                 n_filters=32, embed_dim=128, output_dim=128, dropout=0.2):
+
+        super(GnS, self).__init__()
+
         dim = 32
-        self.dropout = nn.Dropout(dropout)
-        self.relu = nn.ReLU()
-        self.n_output = n_output
-        # convolution layers
-        nn1 = Sequential(Linear(num_features_xd, dim), ReLU(), Linear(dim, dim))
-        self.conv1 = GINConv(nn1)
-        self.bn1 = torch.nn.BatchNorm1d(dim)
 
-        nn2 = Sequential(Linear(dim, dim), ReLU(), Linear(dim, dim))
-        self.conv2 = GINConv(nn2)
-        self.bn2 = torch.nn.BatchNorm1d(dim)
+        # GIN layers (drug)
+        nn1_xd = Sequential(Linear(num_features_xd, dim), ReLU(), Linear(dim, dim))
+        self.conv1_xd = GINConv(nn1_xd)
+        self.bn1_xd = torch.nn.BatchNorm1d(dim)
 
-        nn3 = Sequential(Linear(dim, dim), ReLU(), Linear(dim, dim))
-        self.conv3 = GINConv(nn3)
-        self.bn3 = torch.nn.BatchNorm1d(dim)
+        nn2_xd = Sequential(Linear(dim, dim), ReLU(), Linear(dim, dim))
+        self.conv2_xd = GINConv(nn2_xd)
+        self.bn2_xd = torch.nn.BatchNorm1d(dim)
 
-        nn4 = Sequential(Linear(dim, dim), ReLU(), Linear(dim, dim))
-        self.conv4 = GINConv(nn4)
-        self.bn4 = torch.nn.BatchNorm1d(dim)
+        nn3_xd = Sequential(Linear(dim, dim), ReLU(), Linear(dim, dim))
+        self.conv3_xd = GINConv(nn3_xd)
+        self.bn3_xd = torch.nn.BatchNorm1d(dim)
 
-        nn5 = Sequential(Linear(dim, dim), ReLU(), Linear(dim, dim))
-        self.conv5 = GINConv(nn5)
-        self.bn5 = torch.nn.BatchNorm1d(dim)
+        nn4_xd = Sequential(Linear(dim, dim), ReLU(), Linear(dim, dim))
+        self.conv4_xd = GINConv(nn4_xd)
+        self.bn4_xd = torch.nn.BatchNorm1d(dim)
+
+        nn5_xd = Sequential(Linear(dim, dim), ReLU(), Linear(dim, dim))
+        self.conv5_xd = GINConv(nn5_xd)
+        self.bn5_xd = torch.nn.BatchNorm1d(dim)
 
         self.fc1_xd = Linear(dim, output_dim)
 
         # 1D convolution on protein sequence
         self.embedding_xt = nn.Embedding(num_features_xt + 1, embed_dim)
-        self.conv_xt_1 = nn.Conv1d(in_channels=1000, out_channels=n_filters, kernel_size=8)
+        self.conv_xt_1 = nn.Conv1d(in_channels=1500, out_channels=n_filters, kernel_size=8)
         self.fc1_xt = nn.Linear(32*121, output_dim)
 
-        # combined layers
-        self.fc1 = nn.Linear(256, 1024)
-        self.fc2 = nn.Linear(1024, 256)
-        self.out = nn.Linear(256, self.n_output)        # n_output = 1 for regression task
+        # dense
+        self.classifier = nn.Sequential(
+            nn.Linear(256, 1024),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(1024, 256),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(256, n_output),
+        )
 
     def forward(self, data):
-        x, edge_index, batch = data.x, data.edge_index, data.batch
-        target = data.target
+        xd, xd_ei, xt = data.xd, data.xd_ei, data.xt
+        batch = len(data)
 
-        x = F.relu(self.conv1(x, edge_index))
-        x = self.bn1(x)
-        x = F.relu(self.conv2(x, edge_index))
-        x = self.bn2(x)
-        x = F.relu(self.conv3(x, edge_index))
-        x = self.bn3(x)
-        x = F.relu(self.conv4(x, edge_index))
-        x = self.bn4(x)
-        x = F.relu(self.conv5(x, edge_index))
-        x = self.bn5(x)
-        x = global_add_pool(x, batch)
-        x = F.relu(self.fc1_xd(x))
-        x = F.dropout(x, p=0.2, training=self.training)
+        # drug
+        xd = F.relu(self.conv1_xd(xd, xd_ei))
+        xd = self.bn1_xd(xd)
+        xd = F.relu(self.conv2_xd(xd, xd_ei))
+        xd = self.bn2_xd(xd)
+        xd = F.relu(self.conv3_xd(xd, xd_ei))
+        xd = self.bn3_xd(xd)
+        xd = F.relu(self.conv4_xd(xd, xd_ei))
+        xd = self.bn4_xd(xd)
+        xd = F.relu(self.conv5_xd(xd, xd_ei))
+        xd = self.bn5_xd(xd)
+        xd = global_add_pool(xd, batch)
+        xd = F.relu(self.fc1_xd(xd))
+        xd = F.dropout(xd, p=0.2, training=self.training)
 
-        embedded_xt = self.embedding_xt(target)
+        # protein
+        embedded_xt = self.embedding_xt(xt)
         conv_xt = self.conv_xt_1(embedded_xt)
-
-        # flatten
         xt = conv_xt.view(-1, 32 * 121)
         xt = self.fc1_xt(xt)
 
-        # concat
-        xc = torch.cat((x, xt), 1)
-        # add some dense layers
-        xc = self.fc1(xc)
-        xc = self.relu(xc)
-        xc = self.dropout(xc)
-        xc = self.fc2(xc)
-        xc = self.relu(xc)
-        xc = self.dropout(xc)
-        out = self.out(xc)
+        # joint
+        xj = torch.cat((xd, xt), 1)
+
+        # dense
+        out = self.classifier(xj)
+        return out
+
+
+# d1 (seq) & d2 (graph)
+class SnG(torch.nn.Module):
+    def __init__(self, n_output=1, num_features_xd=64, num_features_xt=41,
+                 n_filters=32, embed_dim=128, output_dim=128, dropout=0.2):
+
+        super(GnG, self).__init__()
+
+        dim = 32
+
+        # 1D convolution on smiles sequence
+        self.embedding_xd = nn.Embedding(num_features_xd + 1, embed_dim)
+        self.conv_xd_1 = nn.Conv1d(in_channels=150, out_channels=n_filters, kernel_size=8)
+
+        # GIN layers (protein)
+        nn1_xt = Sequential(Linear(num_features_xt, dim), ReLU(), Linear(dim, dim))
+        self.conv1_xt = GINConv(nn1_xt)
+        self.bn1_xt = torch.nn.BatchNorm1d(dim)
+
+        nn2_xt = Sequential(Linear(dim, dim), ReLU(), Linear(dim, dim))
+        self.conv2_xt = GINConv(nn2_xt)
+        self.bn2_xt = torch.nn.BatchNorm1d(dim)
+
+        nn3_xt = Sequential(Linear(dim, dim), ReLU(), Linear(dim, dim))
+        self.conv3_xt = GINConv(nn3_xt)
+        self.bn3_xt = torch.nn.BatchNorm1d(dim)
+
+        nn4_xt = Sequential(Linear(dim, dim), ReLU(), Linear(dim, dim))
+        self.conv4_xt = GINConv(nn4_xt)
+        self.bn4_xt = torch.nn.BatchNorm1d(dim)
+
+        nn5_xt = Sequential(Linear(dim, dim), ReLU(), Linear(dim, dim))
+        self.conv5_xt = GINConv(nn5_xt)
+        self.bn5_xt = torch.nn.BatchNorm1d(dim)
+
+        self.fc1_xt = Linear(dim, output_dim)
+
+        # dense
+        self.classifier = nn.Sequential(
+            nn.Linear(256, 1024),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(1024, 256),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(256, n_output),
+        )
+
+    def forward(self, data):
+        xd, xt, xt_ei = data.xd, data.xt, data.xt_ei
+        batch = len(data)
+
+        # drug
+        embedded_xd = self.embedding_x(xd)
+        conv_xd = self.conv_x_1(embedded_xd)
+        xd = self.fc1(conv_xd.view(-1, 32 * 121))
+
+        # protein
+        xt = F.relu(self.conv1_xt(xt, xt_ei))
+        xt = self.bn1_xt(xt)
+        xt = F.relu(self.conv2_xt(xt, xt_ei))
+        xt = self.bn2_xt(xt)
+        xt = F.relu(self.conv3_xt(xt, xt_ei))
+        xt = self.bn3_xt(xt)
+        xt = F.relu(self.conv4_xt(xt, xt_ei))
+        xt = self.bn4_xt(xt)
+        xt = F.relu(self.conv5_xt(xt, xt_ei))
+        xt = self.bn5_xt(xt)
+        xt = global_add_pool(xt, batch)
+        xt = F.relu(self.fc1_xt(xt))
+        xt = F.dropout(xt, p=0.2, training=self.training)
+
+        # joint
+        xj = torch.cat((xd, xt), 1)
+
+        # dense
+        out = self.classifier(xj)
+        return out
+
+
+# d1 (graph) & d2 (graph)
+class GnG(torch.nn.Module):
+    def __init__(self, n_output=1,num_features_xd=55, num_features_xt=41, output_dim=128, dropout=0.2):
+
+        super(GnG, self).__init__()
+
+        dim = 32
+
+        # GIN layers (drug)
+        nn1_xd = Sequential(Linear(num_features_xd, dim), ReLU(), Linear(dim, dim))
+        self.conv1_xd = GINConv(nn1_xd)
+        self.bn1_xd = torch.nn.BatchNorm1d(dim)
+
+        nn2_xd = Sequential(Linear(dim, dim), ReLU(), Linear(dim, dim))
+        self.conv2_xd = GINConv(nn2_xd)
+        self.bn2_xd = torch.nn.BatchNorm1d(dim)
+
+        nn3_xd = Sequential(Linear(dim, dim), ReLU(), Linear(dim, dim))
+        self.conv3_xd = GINConv(nn3_xd)
+        self.bn3_xd = torch.nn.BatchNorm1d(dim)
+
+        nn4_xd = Sequential(Linear(dim, dim), ReLU(), Linear(dim, dim))
+        self.conv4_xd = GINConv(nn4_xd)
+        self.bn4_xd = torch.nn.BatchNorm1d(dim)
+
+        nn5_xd = Sequential(Linear(dim, dim), ReLU(), Linear(dim, dim))
+        self.conv5_xd = GINConv(nn5_xd)
+        self.bn5_xd = torch.nn.BatchNorm1d(dim)
+
+        self.fc1_xd = Linear(dim, output_dim)
+
+        # GIN layers (protein)
+        nn1_xt = Sequential(Linear(num_features_xt, dim), ReLU(), Linear(dim, dim))
+        self.conv1_xt = GINConv(nn1_xt)
+        self.bn1_xt = torch.nn.BatchNorm1d(dim)
+
+        nn2_xt = Sequential(Linear(dim, dim), ReLU(), Linear(dim, dim))
+        self.conv2_xt = GINConv(nn2_xt)
+        self.bn2_xt = torch.nn.BatchNorm1d(dim)
+
+        nn3_xt = Sequential(Linear(dim, dim), ReLU(), Linear(dim, dim))
+        self.conv3_xt = GINConv(nn3_xt)
+        self.bn3_xt = torch.nn.BatchNorm1d(dim)
+
+        nn4_xt = Sequential(Linear(dim, dim), ReLU(), Linear(dim, dim))
+        self.conv4_xt = GINConv(nn4_xt)
+        self.bn4_xt = torch.nn.BatchNorm1d(dim)
+
+        nn5_xt = Sequential(Linear(dim, dim), ReLU(), Linear(dim, dim))
+        self.conv5_xt = GINConv(nn5_xt)
+        self.bn5_xt = torch.nn.BatchNorm1d(dim)
+
+        self.fc1_xt = Linear(dim, output_dim)
+
+        # dense
+        self.classifier = nn.Sequential(
+            nn.Linear(256, 1024),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(1024, 256),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(256, n_output),
+        )
+
+    def forward(self, data):
+        xd, xd_ei, xt, xt_ei = data.xd, data.xd_ei, data.xt, data.xt_ei
+        batch = len(data)
+
+        # drug
+        xd = F.relu(self.conv1_xd(xd, xd_ei))
+        xd = self.bn1_xd(xd)
+        xd = F.relu(self.conv2_xd(xd, xd_ei))
+        xd = self.bn2_xd(xd)
+        xd = F.relu(self.conv3_xd(xd, xd_ei))
+        xd = self.bn3_xd(xd)
+        xd = F.relu(self.conv4_xd(xd, xd_ei))
+        xd = self.bn4_xd(xd)
+        xd = F.relu(self.conv5_xd(xd, xd_ei))
+        xd = self.bn5_xd(xd)
+        xd = global_add_pool(xd, batch)
+        xd = F.relu(self.fc1_xd(xd))
+        xd = F.dropout(xd, p=0.2, training=self.training)
+
+        # protein
+        xt = F.relu(self.conv1_xt(xt, xt_ei))
+        xt = self.bn1_xt(xt)
+        xt = F.relu(self.conv2_xt(xt, xt_ei))
+        xt = self.bn2_xt(xt)
+        xt = F.relu(self.conv3_xt(xt, xt_ei))
+        xt = self.bn3_xt(xt)
+        xt = F.relu(self.conv4_xt(xt, xt_ei))
+        xt = self.bn4_xt(xt)
+        xt = F.relu(self.conv5_xt(xt, xt_ei))
+        xt = self.bn5_xt(xt)
+        xt = global_add_pool(xt, batch)
+        xt = F.relu(self.fc1_xt(xt))
+        xt = F.dropout(xt, p=0.2, training=self.training)
+
+        # joint
+        xj = torch.cat((xd, xt), 1)
+
+        # dense
+        out = self.classifier(xj)
         return out

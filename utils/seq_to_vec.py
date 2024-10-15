@@ -66,16 +66,39 @@ def integer_label_string(sequence, tp):
             logger.warning(
                 f"character {letter} does not exists in sequence category encoding, skip and treat as " f"padding."
             )
-    return torch.from_numpy(encoding).to(torch.long)
+    return torch.from_numpy(encoding).to(torch.long).unsqueeze(0)
 
 
 if __name__ == '__main__':
     dr = 'COc1cc2c(cc1Cl)C(c1ccc(Cl)c(Cl)c1)=NCC2'
     pr = 'MSWSPSLTTQTCGAWEMKERLGTGGFGNVIRWHNQETGEQIAIKQCRQELSPRNRERWCLEIQIMRRLTHPNVVAARDVPEGMQNLAPNDLPLLAMEYCQGGDLRKYLNQFENCCGLREGAILTLLSDIASALRYLHENRIIHRDLKPENIVLQQGEQRLIHKIIDLGYAKELDQGSLCTSFVGTLQYLAPELLEQQKYTVTVDYWSFGTLAFECITGFRPFLPNWQPVQWHSKVRQKSEVDIVVSEDLNGTVKFSSSLPYPNNLNSVLAERLEKWLQLMLMWHPRQRGTDPTYGPNGCFKALDDILNLKLVHILNMVTGTIHTYPVTEDESLQSLKARIQQDTGIPEEDQELLQEAGLALIPDKPATQCISDGKLNEGHTLDMDLVFLFDNSKITYETQISPRPQPESVSCILQEPKRNLAFFQLRKVWGQVWHSIQTLKEDCNRLQQGQRAAMMNLLRNNSCLSKMKNSMASMSQQLKAKLDFFKTSIQIDLEKYSEQTEFGITSDKLLLAWREMEQAVELCGRENEVKLLVERMMALQTDIVDLQRSPMGRKQGGTLDDLEEQARELYRRLREKPRDQRTEGDSQEMVRLLLQAIQSFEKKVRVIYTQLSKTVVCKQKALELLPKVEEVVSLMNEDEKTVVRLQEKRQKELWNLLKIACSKVRGPVSGSPDSMNASRLSQPGQLMSQPSTASNSLPEPAKKSEELVAEAHNLCTLLENAIQDTVREQDQSFTALDWSWLQTEEEEHSCLEQAS'
 
-    drug_seq = integer_label_protein(dr, 'drug')
-    prot_seq = integer_label_protein(pr, 'protein')
+    drug_seq = integer_label_string(dr, 'drug')
+    prot_seq = integer_label_string(pr, 'protein')
 
     print(drug_seq, drug_seq.dtype)
     print(prot_seq, prot_seq.dtype)
+
+    len(drug_seq)
+
+    from torch import nn
+    e = nn.Embedding(CHARISOSMILEN + 1, 128)
+    c = nn.Conv1d(in_channels=150, out_channels=32, kernel_size=8)
+    fc1_xt = nn.Linear(32 * 121, 128)
+    print(e(drug_seq).shape)
+    print(c(e(drug_seq)).shape)
+    xt = c(e(drug_seq)).view(-1, 32 * 121)
+    print(xt.shape)
+    print(fc1_xt(xt).shape)
+
+    e2 = nn.Embedding(CHARPROTLEN + 1, 128)
+    c2 = nn.Conv1d(in_channels=1500, out_channels=32, kernel_size=8)
+    fc2_xt = nn.Linear(32 * 121, 128)
+    print(e2(prot_seq).shape)
+    print(c2(e2(prot_seq)).shape)
+    xt2 = c2(e2(prot_seq)).view(-1, 32 * 121)
+    print(xt2.shape)
+    print(fc2_xt(xt2).shape)
+
+
 

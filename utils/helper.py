@@ -42,19 +42,8 @@ class CustomDataset(Dataset):
         return self.tri_list[index]
 
     def collate_fn(self, batch):
-        d1_samples = []
-        d2_samples = []
-        labels = []
-        for d1, d2, label in batch:
-            d1_samples.append(d1)
-            d2_samples.append(d2)
-            labels.append(label)
-
-        d1_samples = Batch.from_data_list(d1_samples)
-        d2_samples = Batch.from_data_list(d2_samples)
-        labels = torch.FloatTensor(labels)
-
-        return d1_samples, d2_samples, labels
+        samples = Batch.from_data_list(batch)
+        return samples
 
 
 class CustomDataLoader(DataLoader):
