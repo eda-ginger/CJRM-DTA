@@ -11,6 +11,7 @@
 import torch
 import logging
 import numpy as np
+from torch_geometric.data import Data
 logger = logging.getLogger(__name__)
 
 ########################################################################################################################
@@ -66,20 +67,21 @@ def integer_label_string(sequence, tp):
             logger.warning(
                 f"character {letter} does not exists in sequence category encoding, skip and treat as " f"padding."
             )
-    return torch.from_numpy(encoding).to(torch.long).unsqueeze(0)
+    return Data(x=torch.from_numpy(encoding).to(torch.long).unsqueeze(dim=0))
 
 
 if __name__ == '__main__':
     dr = 'COc1cc2c(cc1Cl)C(c1ccc(Cl)c(Cl)c1)=NCC2'
     pr = 'MSWSPSLTTQTCGAWEMKERLGTGGFGNVIRWHNQETGEQIAIKQCRQELSPRNRERWCLEIQIMRRLTHPNVVAARDVPEGMQNLAPNDLPLLAMEYCQGGDLRKYLNQFENCCGLREGAILTLLSDIASALRYLHENRIIHRDLKPENIVLQQGEQRLIHKIIDLGYAKELDQGSLCTSFVGTLQYLAPELLEQQKYTVTVDYWSFGTLAFECITGFRPFLPNWQPVQWHSKVRQKSEVDIVVSEDLNGTVKFSSSLPYPNNLNSVLAERLEKWLQLMLMWHPRQRGTDPTYGPNGCFKALDDILNLKLVHILNMVTGTIHTYPVTEDESLQSLKARIQQDTGIPEEDQELLQEAGLALIPDKPATQCISDGKLNEGHTLDMDLVFLFDNSKITYETQISPRPQPESVSCILQEPKRNLAFFQLRKVWGQVWHSIQTLKEDCNRLQQGQRAAMMNLLRNNSCLSKMKNSMASMSQQLKAKLDFFKTSIQIDLEKYSEQTEFGITSDKLLLAWREMEQAVELCGRENEVKLLVERMMALQTDIVDLQRSPMGRKQGGTLDDLEEQARELYRRLREKPRDQRTEGDSQEMVRLLLQAIQSFEKKVRVIYTQLSKTVVCKQKALELLPKVEEVVSLMNEDEKTVVRLQEKRQKELWNLLKIACSKVRGPVSGSPDSMNASRLSQPGQLMSQPSTASNSLPEPAKKSEELVAEAHNLCTLLENAIQDTVREQDQSFTALDWSWLQTEEEEHSCLEQAS'
 
-    drug_seq = integer_label_string(dr, 'drug')
-    prot_seq = integer_label_string(pr, 'protein')
+    drug_seq = integer_label_string(dr, 'drug').x
+    prot_seq = integer_label_string(pr, 'protein').x
 
-    print(drug_seq, drug_seq.dtype)
-    print(prot_seq, prot_seq.dtype)
+    print(drug_seq, drug_seq.shape, drug_seq.dtype)
+    print(prot_seq, prot_seq.shape, prot_seq.dtype)
 
     len(drug_seq)
+
 
     from torch import nn
     e = nn.Embedding(CHARISOSMILEN + 1, 128)

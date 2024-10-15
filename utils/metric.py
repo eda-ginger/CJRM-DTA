@@ -166,10 +166,11 @@ def f1_score(y_true, y_pred):
     return fs
 
 
-def cal_perform(real, pred, dt_name):
+def cal_perform(data, dt_name):
+    real, pred = data
+    real = real.numpy()
+    pred = pred.numpy()
     result = {'Set': dt_name}
-    real = real.numpy().flatten()
-    pred = pred.numpy().flatten()
     lfs = {'RM2': rm2, 'CI': ci, 'MSE': mse, 'RMSE': rmse, 'Pearson': pearson, 'Spearman': spearman}
     for lfn, lf in lfs.items():
         result[lfn] = f"{round(lf(real, pred), 4):.4f}"

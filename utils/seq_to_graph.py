@@ -92,4 +92,5 @@ def protein_to_graph(protein, pfd, prot_inform):
                 if k != 'Seq':
                     file = pfd / f"{v}.pt"
                     if file.is_file():
-                        return torch.load(file)
+                        f = torch.load(file)
+                        return Data(x=f.x, edge_index=f.edge_index)

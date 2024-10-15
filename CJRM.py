@@ -56,15 +56,15 @@ def train(model, device, train_loader, loss_fn, optimizer, epoch, scheduler=None
     train_reals = torch.Tensor()
     for batch_idx, data in enumerate(train_loader):
 
-        data = data.to(device)
+        data = [d.to(device) for d in data]
 
-        processed_data += len(data)
+        processed_data += len(data[2])
         optimizer.zero_grad()
 
         pred, real = model(data)
 
-        train_preds = torch.cat((train_preds, pred.cpu()), 0)
-        train_reals = torch.cat((train_reals, real.cpu()), 0)
+        train_preds = torch.cat((train_preds, pred.detach().cpu()), 0)
+        train_reals = torch.cat((train_reals, real.detach().cpu()), 0)
 
         loss = loss_fn(pred, real)
         loss.backward()
@@ -88,7 +88,7 @@ def train(model, device, train_loader, loss_fn, optimizer, epoch, scheduler=None
     return train_preds, train_reals, train_loss
 
 
-def evaluation(model, device, loader, set_name):
+def evaluation(model, device, loader):
     model.eval()
     start = time.time()
     total_preds = torch.Tensor()
@@ -98,13 +98,12 @@ def evaluation(model, device, loader, set_name):
             data = [d.to(device) for d in data]
             pred, real = model(data)
 
-            total_preds = torch.cat((total_preds, pred.cpu()), 0)
-            total_reals = torch.cat((total_reals, real.cpu()), 0)
+            total_preds = torch.cat((total_preds, pred.detach().cpu()), 0)
+            total_reals = torch.cat((total_reals, real.detach().cpu()), 0)
 
-    perform = cal_perform(total_reals, total_preds, set_name)
     runtime = f"{(time.time() - start) / 60:.2f} min"
     logger.info(f'eval runtime ({runtime})')
-    return perform
+    return total_preds, total_reals
 
 
 ########################################################################################################################
@@ -159,6 +158,9 @@ if __name__ == '__main__':
 
     # # # tmp
     # data_folder = Path('./data/preprocessed/DAVIS/random')
+    # d1_type, d2_type = 'seq', 'seq'
+    # d1_type, d2_type = 'seq', 'graph'
+    # d1_type, d2_type = 'graph', 'seq'
     # d1_type, d2_type = 'graph', 'graph'
     # data_name = 'davis'
     # project_name = 'Test1'
@@ -171,7 +173,7 @@ if __name__ == '__main__':
     # n_atom_hid = 128
     # n_epochs = 2
     # kge_dim = 128
-    # n_workers = 1
+    # n_workers = 0
     # joint = 'concat'
 
     # output path
@@ -229,21 +231,7 @@ if __name__ == '__main__':
     else:
         raise Exception('d2_type must be either seq or graph')
 
-    # make data
-    if d1_type == 'seq' and d2_type == 'seq':
-        df_total['data'] = df_total[['d1', 'd2', 'Y']].progress_apply(
-            lambda x: Data(xd=x[0], xt=x[1], y=x[2]), axis=1)
-    elif d1_type == 'seq' and d2_type == 'graph':
-        df_total['data'] = df_total[['d1', 'd2', 'Y']].progress_apply(
-            lambda x: Data(xd=x[0], xt=x[1].x, xt_ei=x[1].edge_index, y=x[2]), axis=1)
-    elif d1_type == 'graph' and d2_type == 'seq':
-        df_total['data'] = df_total[['d1', 'd2', 'Y']].progress_apply(
-            lambda x: Data(xd=x[0].x, xd_ei=x[0].edge_index, xt=x[1], y=x[2]), axis=1)
-    elif d1_type == 'graph' and d2_type == 'graph':
-        df_total['data'] = df_total[['d1', 'd2', 'Y']].progress_apply(
-            lambda x: Data(xd=x[0].x, xd_ei=x[0].edge_index, xt=x[1].x, xt_ei=x[1].edge_index, y=x[2]), axis=1)
-    else:
-        raise Exception('type must be either seq or graph')
+    logger.info(f'None values: {df_total.isnull().sum().sum()}')
 
     # save
     save_cols = [c for c in df_total.columns if c not in ['d1', 'd2']]
@@ -254,9 +242,9 @@ if __name__ == '__main__':
     df_val = df_total[df_total['Set'] == 'val']
     df_tst = df_total[df_total['Set'] == 'tst']
 
-    trn_tup = df_trn['data'].tolist()
-    val_tup = df_val['data'].tolist()
-    tst_tup = df_tst['data'].tolist()
+    trn_tup = [(h, t, l) for h, t, l in zip(df_trn['d1'], df_trn['d2'], df_trn['Y'])]
+    val_tup = [(h, t, l) for h, t, l in zip(df_val['d1'], df_val['d2'], df_val['Y'])]
+    tst_tup = [(h, t, l) for h, t, l in zip(df_tst['d1'], df_tst['d2'], df_tst['Y'])]
 
     # start
     start = time.time()
@@ -282,9 +270,6 @@ if __name__ == '__main__':
                                       worker_init_fn=seed_worker, num_workers=n_workers)
         tst_loader = CustomDataLoader(tst_dataset, batch_size=(batch_size * 3),
                                       worker_init_fn=seed_worker, num_workers=n_workers)
-
-        # for batch in trn_loader:
-        #     break
 
         # Define model
         if d1_type == 'seq' and d2_type == 'seq':
@@ -314,9 +299,10 @@ if __name__ == '__main__':
         best_loss = np.inf
         model_results = {}
         for epoch in range(n_epochs):
+            a = 1
             trn_preds, trn_reals, trn_loss = train(model, device, trn_loader, loss_fn, optimizer, epoch + 1, scheduler)
-            check_perform = evaluation(model, device, val_loader, set_name='VAL')
-            val_loss = check_perform['MSE']
+            val_preds, val_reals = evaluation(model, device, val_loader)
+            val_loss = loss_fn(val_preds, val_reals)
 
             if val_loss < best_loss:
                 # save loss
@@ -324,10 +310,12 @@ if __name__ == '__main__':
                 best_epoch = epoch + 1
                 model_state = copy.deepcopy(model.state_dict())
 
+                tst_preds, tst_reals = evaluation(model, device, tst_loader)
+
                 # tst
-                model_results['trn'] = cal_perform(trn_reals, trn_preds, dt_name='TRN')
-                model_results['val'] = check_perform
-                model_results['tst'] = evaluation(model, device, tst_loader, set_name='VAL')
+                model_results['trn'] = (trn_reals, trn_preds)
+                model_results['val'] = (val_reals, val_preds)
+                model_results['tst'] = (tst_reals, tst_preds)
 
                 logger.info(f"(seed: {seed}) improved at epoch {best_epoch}; best loss: {best_loss}")
             else:
@@ -336,9 +324,9 @@ if __name__ == '__main__':
         train_runtime = float(f"{(time.time() - train_time) / 60:.3f}")
         torch.save(model_state, model_folder / f'CJRM_{project_name}_seed{seed}_best.pt')
 
-        trn_perform = model_results['trn']
-        val_perform = model_results['val']
-        tst_perform = model_results['tst']
+        trn_perform = cal_perform(model_results['trn'], dt_name='TRN')
+        val_perform = cal_perform(model_results['val'], dt_name='VAL')
+        tst_perform = cal_perform(model_results['tst'], dt_name='TST')
         performs = pd.DataFrame([trn_perform, val_perform, tst_perform])
 
         performs['Seed'] = seed
