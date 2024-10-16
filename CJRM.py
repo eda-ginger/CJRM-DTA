@@ -289,7 +289,7 @@ if __name__ == '__main__':
         loss_fn = nn.MSELoss()
         if use_scheduler:
             optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
-            scheduler = optim.lr_scheduler.LambdaLR(optimizer, lambda epoch: 0.95 ** (epoch))
+            scheduler = optim.lr_scheduler.LambdaLR(optimizer, lambda epoch: 0.96 ** (epoch))
         else:
             optimizer = optim.Adam(model.parameters(), lr=lr)
 
