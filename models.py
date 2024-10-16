@@ -77,6 +77,8 @@ class SnS(torch.nn.Module):
         conv_xd = self.conv_xd_1(embedded_xd)
         conv_xd = self.conv_xd_2(conv_xd)
         conv_xd = self.conv_xd_3(conv_xd)
+        print(conv_xd.shape)
+
         xd = self.fc1_xd(conv_xd.view(batch_size, 96)) # batch, 128
         print(xd.shape)
 
