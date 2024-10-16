@@ -77,6 +77,7 @@ class SnS(torch.nn.Module):
         conv_xd = self.conv_xd_2(conv_xd)
         conv_xd = self.conv_xd_3(conv_xd)
         xd = self.fc1_xd(conv_xd.view(-1, 96))
+        print(xd.shape)
 
         # protein
         embedded_xt = self.embedding_xt(xt)
@@ -84,9 +85,11 @@ class SnS(torch.nn.Module):
         conv_xt = self.conv_xt_2(conv_xt)
         conv_xt = self.conv_xt_3(conv_xt)
         xt = self.fc1_xt(conv_xt.view(-1, 96))
+        print(xt.shape)
 
         # joint
         xj = torch.cat((xd, xt), 1)
+        print(xj.shape)
 
         # dense
         out = self.classifier(xj)

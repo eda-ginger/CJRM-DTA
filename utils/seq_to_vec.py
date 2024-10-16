@@ -130,4 +130,8 @@ if __name__ == '__main__':
     s2 = fc2_xt(s2)
     print(s2.shape)
 
+    # tmp = (Data(x=e1(drug_seq)), Data(x=e2(prot_seq)), 1)
+    # model = SnS()
+    # model(tmp)
+
 
