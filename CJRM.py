@@ -338,7 +338,6 @@ if __name__ == '__main__':
 
     # history
     total_df = pd.concat(total_results).reset_index(drop=True)
-    total_df.to_csv(output_folder / 'history.csv', index=False, header=True)
     # total_df = pd.read_csv('history.csv')
 
     # summary - 분산도 필요
@@ -360,6 +359,7 @@ if __name__ == '__main__':
         mean_row.append(row_dict)
 
     summary = pd.DataFrame(mean_row)
+    total_df.to_csv(output_folder / 'history.csv', index=False, header=True)
     summary.to_csv(output_folder / f'CJRM_{project_name}_summary.csv', index=False, header=True)
 
     # finish
