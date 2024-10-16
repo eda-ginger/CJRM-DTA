@@ -84,34 +84,50 @@ if __name__ == '__main__':
 
 
     from torch import nn
-    e = nn.Embedding(CHARISOSMILEN + 1, 128) # batch, 100, 128
-    c = nn.Conv1d(in_channels=100, out_channels=32, kernel_size=8) # batch, 32, 121
-    conv_xd_2 = nn.Conv1d(in_channels=32, out_channels=32 * 2, kernel_size=8) # batch, 64, 114
-    conv_xd_3 = nn.Conv1d(in_channels=32 * 2, out_channels=32 * 3, kernel_size=8) # batch, 96, 107
-    pool_xd = nn.AdaptiveMaxPool1d(1) # batch, 96, 1
+    e1 = nn.Embedding(CHARISOSMILEN + 1, 128) # batch, 100, 128
+    c1_1 = nn.Conv1d(in_channels=100, out_channels=32, kernel_size=8) # batch, 32, 121
+    c1_2 = nn.Conv1d(in_channels=32, out_channels=32 * 2, kernel_size=8) # batch, 64, 114
+    c1_3 = nn.Conv1d(in_channels=32 * 2, out_channels=32 * 3, kernel_size=8) # batch, 96, 107
+    c1_p = nn.AdaptiveMaxPool1d(1) # batch, 96, 1
+    fc1_xd = nn.Linear(96 * 1, 128)
 
-    ed = e(drug_seq)
-    edc1 = c(ed)
-    edc2 = conv_xd_2(edc1)
-    edc3 = conv_xd_3(edc2)
-    pooled_xd = pool_xd(edc3)
-    pooled_xd.view(-1, 96 * 1)
+    s1 = e1(drug_seq)
+    print(s1.shape)
+    s1 = c1_1(s1)
+    print(s1.shape)
+    s1 = c1_2(s1)
+    print(s1.shape)
+    s1 = c1_3(s1)
+    print(s1.shape)
+    s1 = c1_p(s1)
+    print(s1.shape)
+    s1 = s1.view(-1, 96 * 1)
+    print(s1.shape)
+    s1 = fc1_xd(s1)
+    print(s1.shape)
 
-    fc1_xt = nn.Linear(32 * 121, 128)
-    print(e(drug_seq).shape)
-    print(c(e(drug_seq)).shape)
-    xt = c(e(drug_seq)).view(-1, 32 * 121)
-    print(xt.shape)
-    print(fc1_xt(xt).shape)
+    print('#' * 20)
 
-    e2 = nn.Embedding(CHARPROTLEN + 1, 128)
-    c2 = nn.Conv1d(in_channels=1000, out_channels=32, kernel_size=8)
-    fc2_xt = nn.Linear(32 * 121, 128)
-    print(e2(prot_seq).shape)
-    print(c2(e2(prot_seq)).shape)
-    xt2 = c2(e2(prot_seq)).view(-1, 32 * 121)
-    print(xt2.shape)
-    print(fc2_xt(xt2).shape)
+    e2 = nn.Embedding(CHARPROTLEN + 1, 128) # batch, 1000, 128
+    c2_1 = nn.Conv1d(in_channels=1000, out_channels=32, kernel_size=8) # batch, 32, 121
+    c2_2 = nn.Conv1d(in_channels=32, out_channels=32 * 2, kernel_size=8) # batch, 64, 114
+    c2_3 = nn.Conv1d(in_channels=32 * 2, out_channels=32 * 3, kernel_size=8) # batch, 96, 107
+    c2_p = nn.AdaptiveMaxPool1d(1) # batch, 96, 1
+    fc2_xt = nn.Linear(96 * 1, 128)
 
+    s2 = e2(prot_seq)
+    print(s2.shape)
+    s2 = c2_1(s2)
+    print(s2.shape)
+    s2 = c2_2(s2)
+    print(s2.shape)
+    s2 = c2_3(s2)
+    print(s2.shape)
+    s2 = c2_p(s2)
+    print(s2.shape)
+    s2 = s2.view(-1, 96 * 1)
+    print(s2.shape)
+    s2 = fc2_xt(s2)
+    print(s2.shape)
 
 
