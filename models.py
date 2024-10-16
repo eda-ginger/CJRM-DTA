@@ -46,7 +46,7 @@ class SnS(torch.nn.Module):
         self.conv_xd_2 = nn.Conv1d(in_channels=n_filters, out_channels=n_filters * 2, kernel_size=8) # batch, 64, 114
         self.conv_xd_3 = nn.Conv1d(in_channels=n_filters * 2, out_channels=n_filters * 3, kernel_size=8) # batch, 96, 107
         self.pool_xd = nn.AdaptiveMaxPool1d(1) # batch, 96, 1
-        self.fc1_xd = nn.Linear(96 * 107, output_dim) # batch, 128
+        self.fc1_xd = nn.Linear(96, output_dim) # batch, 128
 
         # 1D convolution on protein sequence
         self.embedding_xt = nn.Embedding(num_features_xt + 1, embed_dim) # batch, 1000, 128
@@ -54,7 +54,7 @@ class SnS(torch.nn.Module):
         self.conv_xt_2 = nn.Conv1d(in_channels=n_filters, out_channels=n_filters * 2, kernel_size=8) # batch, 64, 114
         self.conv_xt_3 = nn.Conv1d(in_channels=n_filters * 2, out_channels=n_filters * 3, kernel_size=8) # batch, 96, 107
         self.pool_xt = nn.AdaptiveMaxPool1d(1) # batch, 96, 1
-        self.fc1_xt = nn.Linear(96 * 107, output_dim) # batch, 128
+        self.fc1_xt = nn.Linear(96, output_dim) # batch, 128
 
         # dense
         self.classifier = nn.Sequential(
@@ -76,25 +76,22 @@ class SnS(torch.nn.Module):
         conv_xd = self.conv_xd_1(embedded_xd)
         conv_xd = self.conv_xd_2(conv_xd)
         conv_xd = self.conv_xd_3(conv_xd) # batch, 96, 107
-        xd = self.fc1_xd(conv_xd.view(-1, 96 * 107)) # batch, 128
-        print(xd.shape)
+        xd = self.pool_xd(conv_xd)
+        xd = self.fc1_xd(xd.view(-1, 96)) # batch, 128
 
         # protein
         embedded_xt = self.embedding_xt(xt)
         conv_xt = self.conv_xt_1(embedded_xt)
         conv_xt = self.conv_xt_2(conv_xt)
         conv_xt = self.conv_xt_3(conv_xt)
-        xt = self.fc1_xt(conv_xt.view(-1, 96 * 107)) # batch, 128
-        print(xt.shape)
+        xt = self.pool_xt(conv_xt)
+        xt = self.fc1_xt(xt.view(-1, 96)) # batch, 128
 
         # joint
         xj = torch.cat((xd, xt), 1) # batch, 256
-        print(xj.shape)
 
         # dense
-        out = self.classifier(xj)
-        print(out.shape)
-        out = out.squeeze(1)
+        out = self.classifier(xj).squeeze(1)
         return out, y
 
 

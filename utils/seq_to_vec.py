@@ -125,9 +125,7 @@ if __name__ == '__main__':
     print(s2.shape)
     s2 = c2_p(s2)
     print(s2.shape)
-
-
-    s2 = s2.view(1, 96 * 1)
+    s2 = s2.view(-1, 96 * 1)
 
     print(s2.shape)
     s2 = fc2_xt(s2)
