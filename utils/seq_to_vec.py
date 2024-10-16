@@ -136,3 +136,5 @@ if __name__ == '__main__':
     # model(tmp)
 
 
+    # bi = nn.Bilinear(128, 128, 60)
+    # bi(s1, s2).shape

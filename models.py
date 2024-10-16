@@ -21,9 +21,13 @@ from torch_geometric.nn import GINConv, global_add_pool
 def joint_function(t1, t2, how='concat'):
     if how == 'concat':
         return torch.cat((t1, t2), dim=1)
-    elif how == 'max':
-        return torch.max(t1, t2)
-
+    elif how == 'add':
+        return t1 + t2
+    elif how == 'multiple':
+        return t1 * t2
+    elif how == 'bilinear':
+        bi = nn.Bilinear(t1.size(1), t2.size(1), 256) # model 안에 들어가야 함
+        return bi(t1, t2)
     return t1 + t2
 
 
