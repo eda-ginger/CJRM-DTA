@@ -282,9 +282,9 @@ if __name__ == '__main__':
         else:
             raise Exception('type must be either seq or graph')
 
+        model_param_sum = sum(p.numel() for p in model.parameters())
         logger.info(f'Model:\n{model}')
-        logger.info(f'Model params: {sum(p.numel() for p in model.parameters())}')
-
+        logger.info(f'Model params: {model_param_sum}')
         model.to(device)
         loss_fn = nn.MSELoss()
         if use_scheduler:
@@ -337,6 +337,7 @@ if __name__ == '__main__':
         performs['Project'] = project_name
         performs['Best_epoch'] = best_epoch
         performs['Time (min)'] = train_runtime
+        performs['Model Size'] = model_param_sum
         performs.to_csv(model_folder / f'CJRM_{project_name}_seed{seed}_best.csv', header=True, index=False)
         total_results.append(performs)
 
@@ -359,6 +360,8 @@ if __name__ == '__main__':
                 row_dict[k] = int(np.ceil(v))
             elif k == 'Time (min)':
                 row_dict[k] = f"{v:.2f}"
+            elif k == 'Model Size':
+                row_dict[k] = v
             else:
                 v_std = round(group[1].std(numeric_only=True)[k], 2).item()
                 v = f"{v:.4f} ({v_std:.2f})"
