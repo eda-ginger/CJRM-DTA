@@ -285,7 +285,6 @@ if __name__ == '__main__':
         model.to(device)
         loss_fn = nn.MSELoss()
         optimizer = optim.Adam(model.parameters(), lr=lr)
-
         # optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
         # scheduler = optim.lr_scheduler.LambdaLR(optimizer, lambda epoch: 0.96 ** (epoch)) # on? off?
 

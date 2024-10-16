@@ -15,11 +15,25 @@ from torch.nn import Sequential, Linear, ReLU
 from torch_geometric.nn import GINConv, global_add_pool
 
 ########################################################################################################################
+########## Joint functions
+########################################################################################################################
+
+def joint_function(t1, t2, how='concat'):
+    if how == 'concat':
+        return torch.cat((t1, t2), dim=1)
+    elif how == 'max':
+        return torch.max(t1, t2)
+
+    return t1 + t2
+
+
+
+########################################################################################################################
 ########## Models
 ########################################################################################################################
 
 
-# d1 (seq) & d2 (seq)
+# d1 (seq) & d2 (seq) - DeepDTA
 class SnS(torch.nn.Module):
     def __init__(self, n_output=1, num_features_xd=64, num_features_xt=25,
                  n_filters=32, embed_dim=128, output_dim=128, dropout=0.2):
@@ -27,14 +41,20 @@ class SnS(torch.nn.Module):
         super(SnS, self).__init__()
 
         # 1D convolution on smiles sequence
-        self.embedding_xd = nn.Embedding(num_features_xd + 1, embed_dim)
-        self.conv_xd_1 = nn.Conv1d(in_channels=100, out_channels=n_filters, kernel_size=8)
-        self.fc1_xd = nn.Linear(32 * 121, output_dim)
+        self.embedding_xd = nn.Embedding(num_features_xd + 1, embed_dim) # batch, 100, 128
+        self.conv_xd_1 = nn.Conv1d(in_channels=100, out_channels=n_filters, kernel_size=8) # batch, 32, 121
+        self.conv_xd_2 = nn.Conv1d(in_channels=n_filters, out_channels=n_filters * 2, kernel_size=8) # batch, 64, 114
+        self.conv_xd_3 = nn.Conv1d(in_channels=n_filters * 2, out_channels=n_filters * 3, kernel_size=8) # batch, 96, 107
+        self.pool_xd = nn.AdaptiveMaxPool1d(1) # batch, 96, 1
+        self.fc1_xd = nn.Linear(96, output_dim)
 
         # 1D convolution on protein sequence
-        self.embedding_xt = nn.Embedding(num_features_xt + 1, embed_dim)
-        self.conv_xt_1 = nn.Conv1d(in_channels=1000, out_channels=n_filters, kernel_size=8)
-        self.fc1_xt = nn.Linear(32 * 121, output_dim)
+        self.embedding_xt = nn.Embedding(num_features_xt + 1, embed_dim) # batch, 1000, 128
+        self.conv_xt_1 = nn.Conv1d(in_channels=1000, out_channels=n_filters, kernel_size=8) # batch, 32, 121
+        self.conv_xt_2 = nn.Conv1d(in_channels=n_filters, out_channels=n_filters * 2, kernel_size=8) # batch, 64, 114
+        self.conv_xt_3 = nn.Conv1d(in_channels=n_filters * 2, out_channels=n_filters * 3, kernel_size=8) # batch, 96, 107
+        self.pool_xt = nn.AdaptiveMaxPool1d(1) # batch, 96, 1
+        self.fc1_xt = nn.Linear(96, output_dim)
 
         # dense
         self.classifier = nn.Sequential(
@@ -54,12 +74,12 @@ class SnS(torch.nn.Module):
         # drug
         embedded_xd = self.embedding_xd(xd)
         conv_xd = self.conv_xd_1(embedded_xd)
-        xd = self.fc1_xd(conv_xd.view(-1, 32 * 121))
+        xd = self.fc1_xd(conv_xd.view(-1, 96))
 
         # protein
         embedded_xt = self.embedding_xt(xt)
         conv_xt = self.conv_xt_1(embedded_xt)
-        xt = self.fc1_xt(conv_xt.view(-1, 32 * 121))
+        xt = self.fc1_xt(conv_xt.view(-1, 96))
 
         # joint
         xj = torch.cat((xd, xt), 1)
@@ -69,7 +89,7 @@ class SnS(torch.nn.Module):
         return out, y
 
 
-# d1 (graph) & d2 (seq)
+# d1 (graph) & d2 (seq) - GraphDTA
 class GnS(torch.nn.Module):
     def __init__(self, n_output=1, num_features_xd=55, num_features_xt=25,
                  n_filters=32, embed_dim=128, output_dim=128, dropout=0.2):
@@ -150,7 +170,7 @@ class GnS(torch.nn.Module):
         return out, y
 
 
-# d1 (seq) & d2 (graph)
+# d1 (seq) & d2 (graph) - Custom
 class SnG(torch.nn.Module):
     def __init__(self, n_output=1, num_features_xd=64, num_features_xt=41,
                  n_filters=32, embed_dim=128, output_dim=128, dropout=0.2):
@@ -231,7 +251,7 @@ class SnG(torch.nn.Module):
         return out, y
 
 
-# d1 (graph) & d2 (graph)
+# d1 (graph) & d2 (graph) - AttentionMGT-DTA
 class GnG(torch.nn.Module):
     def __init__(self, n_output=1,num_features_xd=55, num_features_xt=41, output_dim=128, dropout=0.2):
 

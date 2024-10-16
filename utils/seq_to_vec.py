@@ -84,8 +84,19 @@ if __name__ == '__main__':
 
 
     from torch import nn
-    e = nn.Embedding(CHARISOSMILEN + 1, 128)
-    c = nn.Conv1d(in_channels=100, out_channels=32, kernel_size=8)
+    e = nn.Embedding(CHARISOSMILEN + 1, 128) # batch, 100, 128
+    c = nn.Conv1d(in_channels=100, out_channels=32, kernel_size=8) # batch, 32, 121
+    conv_xd_2 = nn.Conv1d(in_channels=32, out_channels=32 * 2, kernel_size=8) # batch, 64, 114
+    conv_xd_3 = nn.Conv1d(in_channels=32 * 2, out_channels=32 * 3, kernel_size=8) # batch, 96, 107
+    pool_xd = nn.AdaptiveMaxPool1d(1) # batch, 96, 1
+
+    ed = e(drug_seq)
+    edc1 = c(ed)
+    edc2 = conv_xd_2(edc1)
+    edc3 = conv_xd_3(edc2)
+    pooled_xd = pool_xd(edc3)
+    pooled_xd.view(-1, 96 * 1)
+
     fc1_xt = nn.Linear(32 * 121, 128)
     print(e(drug_seq).shape)
     print(c(e(drug_seq)).shape)
