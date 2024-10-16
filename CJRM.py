@@ -338,6 +338,7 @@ if __name__ == '__main__':
     # history
     total_df = pd.concat(total_results).reset_index(drop=True)
     total_df.to_csv(output_folder / 'history.csv', index=False, header=True)
+    # total_df = pd.read_csv('history.csv')
 
     # summary - 분산도 필요
     mean_row = []
@@ -349,9 +350,11 @@ if __name__ == '__main__':
                 continue
             elif k == 'Best_epoch':
                 row_dict[k] = int(np.ceil(v))
+            elif k == 'Time (min)':
+                row_dict[k] = f"{v:.2f}"
             else:
                 v_std = round(group[1].std(numeric_only=True)[k], 2).item()
-                v = f"{v:.4f} (± {v_std:.2f})"
+                v = f"{v:.4f} ({v_std:.2f})"
                 row_dict[k] = v
         mean_row.append(row_dict)
 
