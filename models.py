@@ -70,16 +70,13 @@ class SnS(torch.nn.Module):
     def forward(self, data):
         drug, target, y = data
         xd, xt = drug.x, target.x
-        batch_size = len(y)
 
         # drug
         embedded_xd = self.embedding_xd(xd)
         conv_xd = self.conv_xd_1(embedded_xd)
         conv_xd = self.conv_xd_2(conv_xd)
-        conv_xd = self.conv_xd_3(conv_xd)
-        print(conv_xd.shape)
-
-        xd = self.fc1_xd(conv_xd.view(batch_size, 96)) # batch, 128
+        conv_xd = self.conv_xd_3(conv_xd) # batch, 96, 107
+        xd = self.fc1_xd(conv_xd.view(-1, 96 * 107)) # batch, 128
         print(xd.shape)
 
         # protein
@@ -87,7 +84,7 @@ class SnS(torch.nn.Module):
         conv_xt = self.conv_xt_1(embedded_xt)
         conv_xt = self.conv_xt_2(conv_xt)
         conv_xt = self.conv_xt_3(conv_xt)
-        xt = self.fc1_xt(conv_xt.view(batch_size, 96)) # batch, 128
+        xt = self.fc1_xt(conv_xt.view(-1, 96 * 107)) # batch, 128
         print(xt.shape)
 
         # joint
