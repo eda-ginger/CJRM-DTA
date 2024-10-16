@@ -28,12 +28,12 @@ class SnS(torch.nn.Module):
 
         # 1D convolution on smiles sequence
         self.embedding_xd = nn.Embedding(num_features_xd + 1, embed_dim)
-        self.conv_xd_1 = nn.Conv1d(in_channels=150, out_channels=n_filters, kernel_size=8)
+        self.conv_xd_1 = nn.Conv1d(in_channels=100, out_channels=n_filters, kernel_size=8)
         self.fc1_xd = nn.Linear(32 * 121, output_dim)
 
         # 1D convolution on protein sequence
         self.embedding_xt = nn.Embedding(num_features_xt + 1, embed_dim)
-        self.conv_xt_1 = nn.Conv1d(in_channels=1500, out_channels=n_filters, kernel_size=8)
+        self.conv_xt_1 = nn.Conv1d(in_channels=1000, out_channels=n_filters, kernel_size=8)
         self.fc1_xt = nn.Linear(32 * 121, output_dim)
 
         # dense
@@ -103,7 +103,7 @@ class GnS(torch.nn.Module):
 
         # 1D convolution on protein sequence
         self.embedding_xt = nn.Embedding(num_features_xt + 1, embed_dim)
-        self.conv_xt_1 = nn.Conv1d(in_channels=1500, out_channels=n_filters, kernel_size=8)
+        self.conv_xt_1 = nn.Conv1d(in_channels=1000, out_channels=n_filters, kernel_size=8)
         self.fc1_xt = nn.Linear(32*121, output_dim)
 
         # dense
@@ -161,7 +161,7 @@ class SnG(torch.nn.Module):
 
         # 1D convolution on smiles sequence
         self.embedding_xd = nn.Embedding(num_features_xd + 1, embed_dim)
-        self.conv_xd_1 = nn.Conv1d(in_channels=150, out_channels=n_filters, kernel_size=8)
+        self.conv_xd_1 = nn.Conv1d(in_channels=100, out_channels=n_filters, kernel_size=8)
         self.fc1_xd = nn.Linear(32 * 121, output_dim)
 
         # GIN layers (protein)

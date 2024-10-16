@@ -283,9 +283,11 @@ if __name__ == '__main__':
         logger.info(f'Model params: {sum(p.numel() for p in model.parameters())}')
 
         model.to(device)
-        loss_fn = F.mse_loss
-        optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
-        scheduler = optim.lr_scheduler.LambdaLR(optimizer, lambda epoch: 0.96 ** (epoch)) # on? off?
+        loss_fn = nn.MSELoss()
+        optimizer = optim.Adam(model.parameters(), lr=lr)
+
+        # optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+        # scheduler = optim.lr_scheduler.LambdaLR(optimizer, lambda epoch: 0.96 ** (epoch)) # on? off?
 
         # train & evaluation
         best_epoch = -1
@@ -295,8 +297,8 @@ if __name__ == '__main__':
         best_loss = np.inf
         model_results = {}
         for epoch in range(n_epochs):
-            a = 1
-            trn_preds, trn_reals, trn_loss = train(model, device, trn_loader, loss_fn, optimizer, epoch + 1, scheduler)
+            # trn_preds, trn_reals, trn_loss = train(model, device, trn_loader, loss_fn, optimizer, epoch + 1, scheduler)
+            trn_preds, trn_reals, trn_loss = train(model, device, trn_loader, loss_fn, optimizer, epoch + 1)
             val_preds, val_reals = evaluation(model, device, val_loader)
             val_loss = loss_fn(val_preds, val_reals)
 

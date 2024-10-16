@@ -50,10 +50,10 @@ def integer_label_string(sequence, tp):
         max_length: Maximum encoding length of input string.
     """
     if tp == 'drug':
-        max_length = 150
+        max_length = 100
         charset = CHARISOSMISET
     elif tp == 'protein':
-        max_length = 1500
+        max_length = 1000
         charset = CHARPROTSET
 
     encoding = np.zeros(max_length)
@@ -85,7 +85,7 @@ if __name__ == '__main__':
 
     from torch import nn
     e = nn.Embedding(CHARISOSMILEN + 1, 128)
-    c = nn.Conv1d(in_channels=150, out_channels=32, kernel_size=8)
+    c = nn.Conv1d(in_channels=100, out_channels=32, kernel_size=8)
     fc1_xt = nn.Linear(32 * 121, 128)
     print(e(drug_seq).shape)
     print(c(e(drug_seq)).shape)
@@ -94,7 +94,7 @@ if __name__ == '__main__':
     print(fc1_xt(xt).shape)
 
     e2 = nn.Embedding(CHARPROTLEN + 1, 128)
-    c2 = nn.Conv1d(in_channels=1500, out_channels=32, kernel_size=8)
+    c2 = nn.Conv1d(in_channels=1000, out_channels=32, kernel_size=8)
     fc2_xt = nn.Linear(32 * 121, 128)
     print(e2(prot_seq).shape)
     print(c2(e2(prot_seq)).shape)
