@@ -130,7 +130,7 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=256, help='batch size')
     parser.add_argument('--weight_decay', type=float, default=5e-4)
     parser.add_argument('--use_cuda', type=int, default=0)
-    parser.add_argument('--use_scheduler', action=argparse.BooleanOptionalAction, default=0)
+    parser.add_argument('--use_scheduler', action=argparse.BooleanOptionalAction, default=False)
 
     args = parser.parse_args()
 
