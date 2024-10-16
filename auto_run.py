@@ -24,8 +24,8 @@ cmd_lst = ['--data ./data/preprocessed/DAVIS/random --d1_type graph --d2_type se
            ]
 
 # # SnS, SnG
-cmd_lst = ['--data ./data/preprocessed/DAVIS/cold_split/Drug_and_Target --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_DT_GnS_concat --n_workers 10 --n_epochs 1000 --lr 1e-4 --batch_size 1024 --joint concat,'
-           
+cmd_lst = ['--data ./data/preprocessed/DAVIS/cold_split/Drug_and_Target --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_DT_GnS_concat --n_workers 10 --n_epochs 1000 --lr 1e-4 --batch_size 1024 --joint concat',
+
            '--data ./data/preprocessed/DAVIS/random --d1_type seq --d2_type seq --data_name DAVIS --project_name DAVIS_random_SnS_concat --n_workers 10 --n_epochs 1000 --lr 1e-4 --batch_size 1024 --joint concat',
            '--data ./data/preprocessed/DAVIS/cold_split/Drug --d1_type seq --d2_type seq --data_name DAVIS --project_name DAVIS_cold_drug_SnS_concat --n_workers 10 --n_epochs 1000 --lr 1e-4 --batch_size 1024 --joint concat',
            '--data ./data/preprocessed/DAVIS/cold_split/Target --d1_type seq --d2_type seq --data_name DAVIS --project_name DAVIS_cold_target_SnS_concat --n_workers 10 --n_epochs 1000 --lr 1e-4 --batch_size 1024 --joint concat',
