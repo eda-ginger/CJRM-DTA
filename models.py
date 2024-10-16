@@ -18,18 +18,37 @@ from torch_geometric.nn import GINConv, global_add_pool
 ########## Joint functions
 ########################################################################################################################
 
-def joint_function(t1, t2, how='concat'):
+def Simple_Joint(t1, t2, how='concat'):
     if how == 'concat':
         return torch.cat((t1, t2), dim=1)
     elif how == 'add':
         return t1 + t2
     elif how == 'multiple':
         return t1 * t2
-    elif how == 'bilinear':
-        bi = nn.Bilinear(t1.size(1), t2.size(1), 256) # model 안에 들어가야 함
-        return bi(t1, t2)
-    return t1 + t2
 
+
+# AttentionMGT-DTA (Prediction module)
+class GnG_Attention(nn.Module):
+    def __init__(self, in_features):
+        super(GnG_Attention, self).__init__()
+
+        self.relu = nn.ReLU()
+        self.sigmoid = nn.Sigmoid()
+        self.tanh = nn.Tanh()
+        self.joint_attn_comp = nn.Linear(in_features, in_features)
+        self.joint_attn_prot = nn.Linear(in_features, in_features)
+
+    def forward(self, xd, xt):
+        # compound-protein interaction
+        inter_comp_prot = self.sigmoid(torch.einsum('bij,bkj->bik', self.joint_attn_prot(self.relu(xt)),
+                                                    self.joint_attn_comp(self.relu(xd))))  # batch, 4, 4
+        inter_comp_prot_sum = torch.einsum('bij->b', inter_comp_prot)  # batch, 1
+        inter_comp_prot = torch.einsum('bij,b->bij', inter_comp_prot, 1 / inter_comp_prot_sum)  # batch, 4, 4
+
+        # compound-protein joint embedding
+        cp_embedding = self.tanh(torch.einsum('bij,bkj->bikj', xd, xt))  # batch, 4, 4, 128
+        cp_embedding = torch.einsum('bijk,bij->bk', cp_embedding, inter_comp_prot)  # batch, 128
+        return cp_embedding
 
 
 ########################################################################################################################

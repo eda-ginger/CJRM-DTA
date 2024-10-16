@@ -9,10 +9,12 @@ webhook_url = "https://discord.com/api/webhooks/1009749385170665533/m4nldXOXR5f9
 def finish(message):
     return message  # Optional return value
 
+
 def split(s):
     params = shlex.split(s)
     print(params)
     return params
+
 
 cmd_lst = ['--data ./data/preprocessed/DAVIS/random --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_random_GnS_concat --n_workers 10 --n_epochs 1000 --lr 1e-4 --batch_size 1024 --joint concat',
            '--data ./data/preprocessed/DAVIS/cold_split/Drug --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_drug_GnS_concat --n_workers 10 --n_epochs 1000 --lr 1e-4 --batch_size 1024 --joint concat',
