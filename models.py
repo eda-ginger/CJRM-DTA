@@ -40,6 +40,8 @@ class SnS(torch.nn.Module):
 
         super(SnS, self).__init__()
 
+        self.relu = nn.ReLU()
+
         # 1D convolution on smiles sequence
         self.embedding_xd = nn.Embedding(num_features_xd + 1, embed_dim) # batch, 100, 128
         self.conv_xd_1 = nn.Conv1d(in_channels=100, out_channels=n_filters, kernel_size=4) # batch, 32, 125
@@ -73,17 +75,17 @@ class SnS(torch.nn.Module):
 
         # drug
         embedded_xd = self.embedding_xd(xd)
-        conv_xd = self.conv_xd_1(embedded_xd)
-        conv_xd = self.conv_xd_2(conv_xd)
-        conv_xd = self.conv_xd_3(conv_xd) # batch, 96, 107
+        conv_xd = self.relu(self.conv_xd_1(embedded_xd))
+        conv_xd = self.relu(self.conv_xd_2(conv_xd))
+        conv_xd = self.relu(self.conv_xd_3(conv_xd))
         xd = self.pool_xd(conv_xd)
         xd = self.fc1_xd(xd.view(-1, 96)) # batch, 128
 
         # protein
         embedded_xt = self.embedding_xt(xt)
-        conv_xt = self.conv_xt_1(embedded_xt)
-        conv_xt = self.conv_xt_2(conv_xt)
-        conv_xt = self.conv_xt_3(conv_xt)
+        conv_xt = self.relu(self.conv_xt_1(embedded_xt))
+        conv_xt = self.relu(self.conv_xt_2(conv_xt))
+        conv_xt = self.relu(self.conv_xt_3(conv_xt))
         xt = self.pool_xt(conv_xt)
         xt = self.fc1_xt(xt.view(-1, 96)) # batch, 128
 
