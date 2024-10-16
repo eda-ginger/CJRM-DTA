@@ -71,24 +71,24 @@ class SnS(torch.nn.Module):
         drug, target, y = data
         xd, xt = drug.x, target.x
 
+        print(len(y))
+
         # drug
         embedded_xd = self.embedding_xd(xd)
         conv_xd = self.conv_xd_1(embedded_xd)
         conv_xd = self.conv_xd_2(conv_xd)
         conv_xd = self.conv_xd_3(conv_xd)
-        xd = self.fc1_xd(conv_xd.view(-1, 96))
-        print(xd.shape)
+        xd = self.fc1_xd(conv_xd.view(-1, 96)) # batch, 128
 
         # protein
         embedded_xt = self.embedding_xt(xt)
         conv_xt = self.conv_xt_1(embedded_xt)
         conv_xt = self.conv_xt_2(conv_xt)
         conv_xt = self.conv_xt_3(conv_xt)
-        xt = self.fc1_xt(conv_xt.view(-1, 96))
-        print(xt.shape)
+        xt = self.fc1_xt(conv_xt.view(-1, 96)) # batch, 128
 
         # joint
-        xj = torch.cat((xd, xt), 1)
+        xj = torch.cat((xd, xt), 1) # batch, 256
         print(xj.shape)
 
         # dense
