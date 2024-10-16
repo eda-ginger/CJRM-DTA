@@ -41,6 +41,7 @@ class SnS(torch.nn.Module):
         super(SnS, self).__init__()
 
         self.relu = nn.ReLU()
+        self.n_filters = n_filters
 
         # 1D convolution on smiles sequence
         self.embedding_xd = nn.Embedding(num_features_xd + 1, embed_dim) # batch, 100, 128
@@ -48,7 +49,7 @@ class SnS(torch.nn.Module):
         self.conv_xd_2 = nn.Conv1d(in_channels=n_filters, out_channels=n_filters * 2, kernel_size=8) # batch, 64, 114
         self.conv_xd_3 = nn.Conv1d(in_channels=n_filters * 2, out_channels=n_filters * 3, kernel_size=8) # batch, 96, 107
         self.pool_xd = nn.AdaptiveMaxPool1d(1) # batch, 96, 1
-        self.fc1_xd = nn.Linear(96, output_dim) # batch, 128
+        self.fc1_xd = nn.Linear(n_filters * 3, output_dim) # batch, 128
 
         # 1D convolution on protein sequence
         self.embedding_xt = nn.Embedding(num_features_xt + 1, embed_dim) # batch, 1000, 128
@@ -56,7 +57,7 @@ class SnS(torch.nn.Module):
         self.conv_xt_2 = nn.Conv1d(in_channels=n_filters, out_channels=n_filters * 2, kernel_size=8) # batch, 64, 114
         self.conv_xt_3 = nn.Conv1d(in_channels=n_filters * 2, out_channels=n_filters * 3, kernel_size=8) # batch, 96, 107
         self.pool_xt = nn.AdaptiveMaxPool1d(1) # batch, 96, 1
-        self.fc1_xt = nn.Linear(96, output_dim) # batch, 128
+        self.fc1_xt = nn.Linear(n_filters * 3, output_dim) # batch, 128
 
         # dense
         self.classifier = nn.Sequential(
@@ -81,7 +82,7 @@ class SnS(torch.nn.Module):
         conv_xd = self.relu(self.conv_xd_2(conv_xd))
         conv_xd = self.relu(self.conv_xd_3(conv_xd))
         xd = self.pool_xd(conv_xd)
-        xd = self.fc1_xd(xd.view(-1, 96)) # batch, 128
+        xd = self.fc1_xd(xd.view(-1, self.n_filters * 3)) # batch, 128
 
         # protein
         embedded_xt = self.embedding_xt(xt)
@@ -89,7 +90,7 @@ class SnS(torch.nn.Module):
         conv_xt = self.relu(self.conv_xt_2(conv_xt))
         conv_xt = self.relu(self.conv_xt_3(conv_xt))
         xt = self.pool_xt(conv_xt)
-        xt = self.fc1_xt(xt.view(-1, 96)) # batch, 128
+        xt = self.fc1_xt(xt.view(-1, self.n_filters * 3)) # batch, 128
 
         # joint
         xj = torch.cat((xd, xt), 1) # batch, 256
