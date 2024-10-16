@@ -85,9 +85,9 @@ if __name__ == '__main__':
 
     from torch import nn
     e1 = nn.Embedding(CHARISOSMILEN + 1, 128) # batch, 100, 128
-    c1_1 = nn.Conv1d(in_channels=100, out_channels=32, kernel_size=8) # batch, 32, 121
-    c1_2 = nn.Conv1d(in_channels=32, out_channels=32 * 2, kernel_size=8) # batch, 64, 114
-    c1_3 = nn.Conv1d(in_channels=32 * 2, out_channels=32 * 3, kernel_size=8) # batch, 96, 107
+    c1_1 = nn.Conv1d(in_channels=100, out_channels=32, kernel_size=4) # batch, 32, 121 / 125
+    c1_2 = nn.Conv1d(in_channels=32, out_channels=32 * 2, kernel_size=6) # batch, 64, 114 / 120
+    c1_3 = nn.Conv1d(in_channels=32 * 2, out_channels=32 * 3, kernel_size=8) # batch, 96, 107 / 113
     c1_p = nn.AdaptiveMaxPool1d(1) # batch, 96, 1
     fc1_xd = nn.Linear(96 * 1, 128)
 
@@ -109,11 +109,11 @@ if __name__ == '__main__':
     print('#' * 20)
 
     e2 = nn.Embedding(CHARPROTLEN + 1, 128) # batch, 1000, 128
-    c2_1 = nn.Conv1d(in_channels=1000, out_channels=32, kernel_size=8) # batch, 32, 121
-    c2_2 = nn.Conv1d(in_channels=32, out_channels=32 * 2, kernel_size=8) # batch, 64, 114
-    c2_3 = nn.Conv1d(in_channels=32 * 2, out_channels=32 * 3, kernel_size=8) # batch, 96, 107
+    c2_1 = nn.Conv1d(in_channels=1000, out_channels=32, kernel_size=4) # batch, 32, 121 / 125
+    c2_2 = nn.Conv1d(in_channels=32, out_channels=32 * 2, kernel_size=8) # batch, 64, 114 / 118
+    c2_3 = nn.Conv1d(in_channels=32 * 2, out_channels=32 * 3, kernel_size=12) # batch, 96, 107 / 107
     c2_p = nn.AdaptiveMaxPool1d(1) # batch, 96, 1
-    fc2_xt = nn.Linear(96 * 107, 128)
+    fc2_xt = nn.Linear(96, 128)
 
     s2 = e2(prot_seq)
     print(s2.shape)
