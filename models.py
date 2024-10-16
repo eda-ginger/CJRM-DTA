@@ -44,17 +44,17 @@ class SnS(torch.nn.Module):
 
         # 1D convolution on smiles sequence
         self.embedding_xd = nn.Embedding(num_features_xd + 1, embed_dim) # batch, 100, 128
-        self.conv_xd_1 = nn.Conv1d(in_channels=100, out_channels=n_filters, kernel_size=4) # batch, 32, 125
-        self.conv_xd_2 = nn.Conv1d(in_channels=n_filters, out_channels=n_filters * 2, kernel_size=6) # batch, 64, 120
-        self.conv_xd_3 = nn.Conv1d(in_channels=n_filters * 2, out_channels=n_filters * 3, kernel_size=8) # batch, 96, 113
+        self.conv_xd_1 = nn.Conv1d(in_channels=100, out_channels=n_filters, kernel_size=8) # batch, 32, 121
+        self.conv_xd_2 = nn.Conv1d(in_channels=n_filters, out_channels=n_filters * 2, kernel_size=8) # batch, 64, 114
+        self.conv_xd_3 = nn.Conv1d(in_channels=n_filters * 2, out_channels=n_filters * 3, kernel_size=8) # batch, 96, 107
         self.pool_xd = nn.AdaptiveMaxPool1d(1) # batch, 96, 1
         self.fc1_xd = nn.Linear(96, output_dim) # batch, 128
 
         # 1D convolution on protein sequence
         self.embedding_xt = nn.Embedding(num_features_xt + 1, embed_dim) # batch, 1000, 128
-        self.conv_xt_1 = nn.Conv1d(in_channels=1000, out_channels=n_filters, kernel_size=4) # batch, 32, 125
-        self.conv_xt_2 = nn.Conv1d(in_channels=n_filters, out_channels=n_filters * 2, kernel_size=8) # batch, 64, 118
-        self.conv_xt_3 = nn.Conv1d(in_channels=n_filters * 2, out_channels=n_filters * 3, kernel_size=12) # batch, 96, 107
+        self.conv_xt_1 = nn.Conv1d(in_channels=1000, out_channels=n_filters, kernel_size=8) # batch, 32, 121
+        self.conv_xt_2 = nn.Conv1d(in_channels=n_filters, out_channels=n_filters * 2, kernel_size=8) # batch, 64, 114
+        self.conv_xt_3 = nn.Conv1d(in_channels=n_filters * 2, out_channels=n_filters * 3, kernel_size=8) # batch, 96, 107
         self.pool_xt = nn.AdaptiveMaxPool1d(1) # batch, 96, 1
         self.fc1_xt = nn.Linear(96, output_dim) # batch, 128
 
@@ -62,11 +62,13 @@ class SnS(torch.nn.Module):
         self.classifier = nn.Sequential(
             nn.Linear(256, 1024),
             nn.ReLU(),
-            nn.Dropout(dropout),
-            nn.Linear(1024, 256),
+            nn.Dropout(0.1),
+            nn.Linear(1024, 1024),
             nn.ReLU(),
-            nn.Dropout(dropout),
-            nn.Linear(256, n_output),
+            nn.Dropout(0.1),
+            nn.Linear(1024, 512),
+            nn.ReLU(),
+            nn.Linear(512, n_output),
         )
 
     def forward(self, data):
