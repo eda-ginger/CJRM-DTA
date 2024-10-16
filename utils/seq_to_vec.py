@@ -101,7 +101,7 @@ if __name__ == '__main__':
     print(s1.shape)
     s1 = c1_p(s1)
     print(s1.shape)
-    s1 = s1.view(-1, 96 * 1)
+    s1 = s1.view(1, 96 * 1)
     print(s1.shape)
     s1 = fc1_xd(s1)
     print(s1.shape)
@@ -125,7 +125,11 @@ if __name__ == '__main__':
     print(s2.shape)
     s2 = c2_p(s2)
     print(s2.shape)
-    s2 = s2.view(-1, 96 * 1)
+
+    s2.view(-1, 96).shape
+
+    s2 = s2.view(1, 96 * 1)
+
     print(s2.shape)
     s2 = fc2_xt(s2)
     print(s2.shape)
