@@ -113,7 +113,7 @@ if __name__ == '__main__':
     c2_2 = nn.Conv1d(in_channels=32, out_channels=32 * 2, kernel_size=8) # batch, 64, 114
     c2_3 = nn.Conv1d(in_channels=32 * 2, out_channels=32 * 3, kernel_size=8) # batch, 96, 107
     c2_p = nn.AdaptiveMaxPool1d(1) # batch, 96, 1
-    fc2_xt = nn.Linear(96 * 1, 128)
+    fc2_xt = nn.Linear(96 * 107, 128)
 
     s2 = e2(prot_seq)
     print(s2.shape)
@@ -126,7 +126,6 @@ if __name__ == '__main__':
     s2 = c2_p(s2)
     print(s2.shape)
 
-    s2.view(-1, 96).shape
 
     s2 = s2.view(1, 96 * 1)
 
