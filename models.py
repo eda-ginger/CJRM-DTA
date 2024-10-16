@@ -46,7 +46,7 @@ class SnS(torch.nn.Module):
         self.conv_xd_2 = nn.Conv1d(in_channels=n_filters, out_channels=n_filters * 2, kernel_size=8) # batch, 64, 114
         self.conv_xd_3 = nn.Conv1d(in_channels=n_filters * 2, out_channels=n_filters * 3, kernel_size=8) # batch, 96, 107
         self.pool_xd = nn.AdaptiveMaxPool1d(1) # batch, 96, 1
-        self.fc1_xd = nn.Linear(96, output_dim)
+        self.fc1_xd = nn.Linear(96, output_dim) # batch, 128
 
         # 1D convolution on protein sequence
         self.embedding_xt = nn.Embedding(num_features_xt + 1, embed_dim) # batch, 1000, 128
@@ -54,7 +54,7 @@ class SnS(torch.nn.Module):
         self.conv_xt_2 = nn.Conv1d(in_channels=n_filters, out_channels=n_filters * 2, kernel_size=8) # batch, 64, 114
         self.conv_xt_3 = nn.Conv1d(in_channels=n_filters * 2, out_channels=n_filters * 3, kernel_size=8) # batch, 96, 107
         self.pool_xt = nn.AdaptiveMaxPool1d(1) # batch, 96, 1
-        self.fc1_xt = nn.Linear(96, output_dim)
+        self.fc1_xt = nn.Linear(96, output_dim) # batch, 128
 
         # dense
         self.classifier = nn.Sequential(
@@ -89,7 +89,9 @@ class SnS(torch.nn.Module):
         xj = torch.cat((xd, xt), 1)
 
         # dense
-        out = self.classifier(xj).squeeze(1)
+        out = self.classifier(xj)
+        print(out.shape)
+        out = out.squeeze(1)
         return out, y
 
 
