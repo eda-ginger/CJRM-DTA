@@ -130,6 +130,7 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=256, help='batch size')
     parser.add_argument('--weight_decay', type=float, default=5e-4)
     parser.add_argument('--use_cuda', type=int, default=0)
+    parser.add_argument('--use_scheduler', action=argparse.BooleanOptionalAction, default=0)
 
     args = parser.parse_args()
 
@@ -147,6 +148,7 @@ if __name__ == '__main__':
     weight_decay = args.weight_decay
 
     device = f'cuda:{args.use_cuda}' if torch.cuda.is_available() else 'cpu'
+    use_scheduler = args.use_scheduler
 
     ####################################################################################################################
     ########## Run
@@ -197,6 +199,7 @@ if __name__ == '__main__':
     logger.info(f'weight_decay: {weight_decay}')
 
     logger.info(f'device: {device}')
+    logger.info(f'use_scheduler: {use_scheduler}')
 
     # load dataset
     df_trn = pd.read_csv(data_folder / 'train.csv')
@@ -284,9 +287,11 @@ if __name__ == '__main__':
 
         model.to(device)
         loss_fn = nn.MSELoss()
-        optimizer = optim.Adam(model.parameters(), lr=lr)
-        # optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
-        # scheduler = optim.lr_scheduler.LambdaLR(optimizer, lambda epoch: 0.96 ** (epoch)) # on? off?
+        if use_scheduler:
+            optimizer = optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
+            scheduler = optim.lr_scheduler.LambdaLR(optimizer, lambda epoch: 0.96 ** (epoch)) # on? off?
+        else:
+            optimizer = optim.Adam(model.parameters(), lr=lr)
 
         # train & evaluation
         best_epoch = -1
@@ -296,8 +301,10 @@ if __name__ == '__main__':
         best_loss = np.inf
         model_results = {}
         for epoch in range(n_epochs):
-            # trn_preds, trn_reals, trn_loss = train(model, device, trn_loader, loss_fn, optimizer, epoch + 1, scheduler)
-            trn_preds, trn_reals, trn_loss = train(model, device, trn_loader, loss_fn, optimizer, epoch + 1)
+            if use_scheduler:
+                trn_preds, trn_reals, trn_loss = train(model, device, trn_loader, loss_fn, optimizer, epoch + 1, scheduler)
+            else:
+                trn_preds, trn_reals, trn_loss = train(model, device, trn_loader, loss_fn, optimizer, epoch + 1)
             val_preds, val_reals = evaluation(model, device, val_loader)
             val_loss = loss_fn(val_preds, val_reals)
 
