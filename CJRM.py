@@ -258,9 +258,6 @@ if __name__ == '__main__':
         trn_dataset = CustomDataset(trn_tup)
         val_dataset = CustomDataset(val_tup)
         tst_dataset = CustomDataset(tst_tup)
-        # trn_dataset = CustomDataset(trn_tup[:12])
-        # val_dataset = CustomDataset(val_tup[:12])
-        # tst_dataset = CustomDataset(tst_tup[:12])
         logger.info(f"TRN: {len(trn_dataset)}, VAL: {len(val_dataset)}, TST: {len(tst_dataset)}")
 
         trn_loader = CustomDataLoader(trn_dataset, batch_size=batch_size, shuffle=True,
