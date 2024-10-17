@@ -124,13 +124,15 @@ if __name__ == '__main__':
     parser.add_argument('--project_name', type=str, required=True, help='project name')
     parser.add_argument('--joint', type=str, required=True, help='choose joint method')
 
-    parser.add_argument('--lr', type=float, default=1e-3, help='learning rate')
-    parser.add_argument('--n_epochs', type=int, default=200, help='num of epochs')
-    parser.add_argument('--n_workers', type=int, default=1, help='num of workers for dataset')
-    parser.add_argument('--batch_size', type=int, default=256, help='batch size')
+    parser.add_argument('--lr', type=float, default=1e-4, help='learning rate')
+    parser.add_argument('--n_epochs', type=int, default=1000, help='num of epochs')
+    parser.add_argument('--n_workers', type=int, default=10, help='num of workers for dataset')
+    parser.add_argument('--batch_size', type=int, default=1024, help='batch size')
     parser.add_argument('--weight_decay', type=float, default=5e-4)
     parser.add_argument('--use_cuda', type=int, default=0)
     parser.add_argument('--use_scheduler', action=argparse.BooleanOptionalAction, default=False)
+
+    parser.add_argument('--one_shot', action=argparse.BooleanOptionalAction, default=False)
 
     args = parser.parse_args()
 
@@ -149,12 +151,13 @@ if __name__ == '__main__':
 
     device = f'cuda:{args.use_cuda}' if torch.cuda.is_available() else 'cpu'
     use_scheduler = args.use_scheduler
+    one_shot = args.one_shot
 
     ####################################################################################################################
     ########## Run
     ####################################################################################################################
 
-    # # # tmp
+    # # tmp
     # data_folder = Path('./data/preprocessed/DAVIS/random')
     # d1_type, d2_type = 'seq', 'seq'
     # d1_type, d2_type = 'seq', 'graph'
@@ -173,6 +176,7 @@ if __name__ == '__main__':
     # kge_dim = 128
     # n_workers = 0
     # joint = 'concat'
+    # one_shot = True
 
     # output path
     today = str(date.today()).replace('-', '')
@@ -200,6 +204,7 @@ if __name__ == '__main__':
 
     logger.info(f'device: {device}')
     logger.info(f'use_scheduler: {use_scheduler}')
+    logger.info(f'one_shot: {one_shot}')
 
     # load dataset
     df_trn = pd.read_csv(data_folder / 'train.csv')
@@ -248,7 +253,12 @@ if __name__ == '__main__':
     # start
     start = time.time()
     total_results = []
-    seeds = [5, 42, 76]
+
+    if one_shot:
+        seeds = [42]
+    else:
+        seeds = [5, 42, 76]
+
     for seed in seeds:
         logger.info(f"#####" * 20)
         train_time = time.time()
@@ -269,13 +279,13 @@ if __name__ == '__main__':
 
         # Define model
         if d1_type == 'seq' and d2_type == 'seq':
-            model = SnS()
+            model = SnS(joint=joint)
         elif d1_type == 'seq' and d2_type == 'graph':
-            model = SnG()
+            model = SnG(joint=joint)
         elif d1_type == 'graph' and d2_type == 'seq':
-            model = GnS()
+            model = GnS(joint=joint)
         elif d1_type == 'graph' and d2_type == 'graph':
-            model = GnG()
+            model = GnG(joint=joint)
         else:
             raise Exception('type must be either seq or graph')
 
@@ -345,29 +355,32 @@ if __name__ == '__main__':
     total_df = pd.concat(total_results).reset_index(drop=True)
     # total_df = pd.read_csv('history.csv')
 
-    # summary - 분산도 필요
-    mean_row = []
-    for group in total_df.groupby(by=['Set', 'Project']):
-        row_dict = {'Set': group[0][0], 'Project': group[0][1]}
-        for k, v in group[1].mean(numeric_only=True).to_dict().items():
-            if k == 'Seed':
-                row_dict['Seeds'] = ', '.join(map(str, group[1]['Seed'].tolist()))
-                continue
-            elif k == 'Best_epoch':
-                row_dict[k] = int(np.ceil(v))
-            elif k == 'Time (min)':
-                row_dict[k] = f"{v:.2f}"
-            elif k == 'Model Size':
-                row_dict[k] = v
-            else:
-                v_var = round(group[1].var(numeric_only=True)[k], 2).item()
-                v = f"{v:.4f} ({v_var:.2f})"
-                row_dict[k] = v
-        mean_row.append(row_dict)
+    # summary
+    if not one_shot:
+        mean_row = []
+        for group in total_df.groupby(by=['Set', 'Project']):
+            row_dict = {'Set': group[0][0], 'Project': group[0][1]}
+            for k, v in group[1].mean(numeric_only=True).to_dict().items():
+                if k == 'Seed':
+                    row_dict['Seeds'] = ', '.join(map(str, group[1]['Seed'].tolist()))
+                    continue
+                elif k == 'Best_epoch':
+                    row_dict[k] = int(np.ceil(v))
+                elif k == 'Time (min)':
+                    row_dict[k] = f"{v:.2f}"
+                elif k == 'Model Size':
+                    row_dict[k] = v
+                else:
+                    v_var = round(group[1].var(numeric_only=True)[k], 2).item()
+                    v = f"{v:.4f} ({v_var:.2f})"
+                    row_dict[k] = v
+            mean_row.append(row_dict)
 
-    summary = pd.DataFrame(mean_row)
-    total_df.to_csv(output_folder / 'history.csv', index=False, header=True)
-    summary.to_csv(output_folder / f'CJRM_{project_name}_summary.csv', index=False, header=True)
+        summary = pd.DataFrame(mean_row)
+        total_df.to_csv(output_folder / 'history.csv', index=False, header=True)
+        summary.to_csv(output_folder / f'CJRM_{project_name}_summary.csv', index=False, header=True)
+    else:
+        total_df.to_csv(output_folder / 'history_one_shot.csv', index=False, header=True)
 
     # finish
     runtime = time.strftime("%H:%M:%S", time.gmtime(time.time() - start))
