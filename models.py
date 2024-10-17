@@ -20,11 +20,9 @@ from torch.nn import Sequential, Linear, ReLU
 from torch_geometric.nn import GINConv, global_add_pool as gap
 from torch_geometric.nn import GCNConv, global_mean_pool as gep
 
-
 ########################################################################################################################
 ########## Models
 ########################################################################################################################
-
 
 # d1 (seq) & d2 (seq) - DeepDTA
 class SnS(torch.nn.Module):
