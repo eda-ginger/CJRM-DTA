@@ -15,13 +15,17 @@ def split(s):
     print(params)
     return params
 
+
 cmd_lst = ['--data ./data/preprocessed/KIBA/random --d1_type seq --d2_type seq --data_name KIBA --project_name KIBA_random_SnS_concat --use_cuda 1 --joint concat --one_shot',
            '--data ./data/preprocessed/KIBA/random --d1_type seq --d2_type seq --data_name KIBA --project_name KIBA_random_SnS_multiple --use_cuda 1 --joint multiple --one_shot',
            '--data ./data/preprocessed/KIBA/random --d1_type seq --d2_type seq --data_name KIBA --project_name KIBA_random_SnS_bi --use_cuda 1 --joint bi --one_shot',
-           '--data ./data/preprocessed/KIBA/random --d1_type graph --d2_type seq --data_name KIBA --project_name KIBA_random_GnS_multiple --use_cuda 1 --joint multiple --one_shot',
-           '--data ./data/preprocessed/KIBA/random --d1_type graph --d2_type seq --data_name KIBA --project_name KIBA_random_GnS_bi --use_cuda 1 --joint bi --one_shot'
-           ]
 
+           '--data ./data/preprocessed/KIBA/random --d1_type graph --d2_type seq --data_name KIBA --project_name KIBA_random_GnS_multiple --use_cuda 1 --joint multiple --one_shot',
+           '--data ./data/preprocessed/KIBA/random --d1_type graph --d2_type seq --data_name KIBA --project_name KIBA_random_GnS_bi --use_cuda 1 --joint bi --one_shot',
+
+           '--data ./data/preprocessed/KIBA/random --d1_type seq --d2_type seq --data_name KIBA --project_name KIBA_random_SnS_add --use_cuda 1 --joint add --one_shot',
+           '--data ./data/preprocessed/KIBA/random --d1_type graph --d2_type seq --data_name KIBA --project_name KIBA_random_GnS_add --use_cuda 1 --joint add --one_shot'
+           ]
 
 
 import time

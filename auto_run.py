@@ -25,7 +25,12 @@ cmd_lst = ['--data ./data/preprocessed/DAVIS/random --d1_type seq --d2_type seq 
            '--data ./data/preprocessed/DAVIS/random --d1_type seq --d2_type seq --data_name DAVIS --project_name DAVIS_random_SnS_bi --joint bi',
            '--data ./data/preprocessed/DAVIS/cold_split/Drug --d1_type seq --d2_type seq --data_name DAVIS --project_name DAVIS_cold_drug_SnS_bi --joint bi',
            '--data ./data/preprocessed/DAVIS/cold_split/Target --d1_type seq --d2_type seq --data_name DAVIS --project_name DAVIS_cold_target_SnS_bi --joint bi',
-           '--data ./data/preprocessed/DAVIS/cold_split/Drug_and_Target --d1_type seq --d2_type seq --data_name DAVIS --project_name DAVIS_cold_DT_SnS_bi --joint bi'
+           '--data ./data/preprocessed/DAVIS/cold_split/Drug_and_Target --d1_type seq --d2_type seq --data_name DAVIS --project_name DAVIS_cold_DT_SnS_bi --joint bi',
+
+           '--data ./data/preprocessed/DAVIS/random --d1_type seq --d2_type seq --data_name DAVIS --project_name DAVIS_random_SnS_add --joint add',
+           '--data ./data/preprocessed/DAVIS/cold_split/Drug --d1_type seq --d2_type seq --data_name DAVIS --project_name DAVIS_cold_drug_SnS_add --joint add',
+           '--data ./data/preprocessed/DAVIS/cold_split/Target --d1_type seq --d2_type seq --data_name DAVIS --project_name DAVIS_cold_target_SnS_add --joint add',
+           '--data ./data/preprocessed/DAVIS/cold_split/Drug_and_Target --d1_type seq --d2_type seq --data_name DAVIS --project_name DAVIS_cold_DT_SnS_add --joint add'
            ]
 
 import time
