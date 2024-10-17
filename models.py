@@ -102,7 +102,6 @@ class SnS(torch.nn.Module):
 
         # joint
         xj = self.jc(xd, xt)
-        print(xj.shape)
 
         # dense
         out = self.classifier(xj).squeeze(1)
@@ -197,9 +196,7 @@ class GnS(torch.nn.Module):
         xt = self.fc1_xt(conv_xt.view(-1, 32 * 121))
 
         # joint
-        # xj = torch.cat((xd, xt), 1)
         xj = self.jc(xd, xt)
-        print(xj.shape)
 
         # dense
         out = self.classifier(xj).squeeze(1)
@@ -430,4 +427,3 @@ class GnG_Attention(nn.Module):
 # sns = GnS(joint='bi')
 # p, r = sns(tmp)
 # print(p.shape, r.shape)
-#
