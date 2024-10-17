@@ -363,8 +363,8 @@ if __name__ == '__main__':
             elif k == 'Model Size':
                 row_dict[k] = v
             else:
-                v_std = round(group[1].std(numeric_only=True)[k], 2).item()
-                v = f"{v:.4f} ({v_std:.2f})"
+                v_var = round(group[1].var(numeric_only=True)[k], 2).item()
+                v = f"{v:.4f} ({v_var:.2f})"
                 row_dict[k] = v
         mean_row.append(row_dict)
 
