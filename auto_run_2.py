@@ -16,15 +16,15 @@ def split(s):
     return params
 
 
-cmd_lst = ['--data ./data/preprocessed/KIBA/random --d1_type seq --d2_type seq --data_name KIBA --project_name KIBA_random_SnS_concat --use_cuda 1 --joint concat --one_shot',
-           '--data ./data/preprocessed/KIBA/random --d1_type seq --d2_type seq --data_name KIBA --project_name KIBA_random_SnS_multiple --use_cuda 1 --joint multiple --one_shot',
-           '--data ./data/preprocessed/KIBA/random --d1_type seq --d2_type seq --data_name KIBA --project_name KIBA_random_SnS_bi --use_cuda 1 --joint bi --one_shot',
+cmd_lst = ['--data ./data/preprocessed/DAVIS/random --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_random_GnS_multiple --joint multiple --use_cuda 1',
+           '--data ./data/preprocessed/DAVIS/cold_split/Drug --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_drug_GnS_multiple --joint multiple --use_cuda 1',
+           '--data ./data/preprocessed/DAVIS/cold_split/Target --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_target_GnS_multiple --joint multiple --use_cuda 1',
+           '--data ./data/preprocessed/DAVIS/cold_split/Drug_and_Target --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_DT_GnS_multiple --joint multiple --use_cuda 1',
 
-           '--data ./data/preprocessed/KIBA/random --d1_type graph --d2_type seq --data_name KIBA --project_name KIBA_random_GnS_multiple --use_cuda 1 --joint multiple --one_shot',
-           '--data ./data/preprocessed/KIBA/random --d1_type graph --d2_type seq --data_name KIBA --project_name KIBA_random_GnS_bi --use_cuda 1 --joint bi --one_shot',
-
-           '--data ./data/preprocessed/KIBA/random --d1_type seq --d2_type seq --data_name KIBA --project_name KIBA_random_SnS_add --use_cuda 1 --joint add --one_shot',
-           '--data ./data/preprocessed/KIBA/random --d1_type graph --d2_type seq --data_name KIBA --project_name KIBA_random_GnS_add --use_cuda 1 --joint add --one_shot'
+           '--data ./data/preprocessed/DAVIS/random --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_random_GnS_bi --joint bi --use_cuda 1',
+           '--data ./data/preprocessed/DAVIS/cold_split/Drug --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_drug_GnS_bi --joint bi --use_cuda 1',
+           '--data ./data/preprocessed/DAVIS/cold_split/Target --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_target_GnS_bi --joint bi --use_cuda 1',
+           '--data ./data/preprocessed/DAVIS/cold_split/Drug_and_Target --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_DT_GnS_bi --joint bi --use_cuda 1'
            ]
 
 
@@ -44,4 +44,15 @@ finish(f'\nAll job finished successfully!')
 
 ## concat
 # '--data ./data/preprocessed/KIBA/random --d1_type graph --d2_type seq --data_name KIBA --project_name KIBA_random_GnS_concat --use_cuda 1 --joint concat --one_shot'
+
+# '--data ./data/preprocessed/KIBA/random --d1_type seq --d2_type seq --data_name KIBA --project_name KIBA_random_SnS_concat --use_cuda 1 --joint concat --one_shot',
+# '--data ./data/preprocessed/KIBA/random --d1_type seq --d2_type seq --data_name KIBA --project_name KIBA_random_SnS_multiple --use_cuda 1 --joint multiple --one_shot',
+# '--data ./data/preprocessed/KIBA/random --d1_type seq --d2_type seq --data_name KIBA --project_name KIBA_random_SnS_bi --use_cuda 1 --joint bi --one_shot',
+#
+# '--data ./data/preprocessed/KIBA/random --d1_type graph --d2_type seq --data_name KIBA --project_name KIBA_random_GnS_multiple --use_cuda 1 --joint multiple --one_shot',
+# '--data ./data/preprocessed/KIBA/random --d1_type graph --d2_type seq --data_name KIBA --project_name KIBA_random_GnS_bi --use_cuda 1 --joint bi --one_shot',
+#
+# '--data ./data/preprocessed/KIBA/random --d1_type seq --d2_type seq --data_name KIBA --project_name KIBA_random_SnS_add --use_cuda 1 --joint add --one_shot',
+# '--data ./data/preprocessed/KIBA/random --d1_type graph --d2_type seq --data_name KIBA --project_name KIBA_random_GnS_add --use_cuda 1 --joint add --one_shot'
+
 
