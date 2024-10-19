@@ -17,6 +17,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn import Sequential, Linear, ReLU
+from torch.nn.utils.weight_norm import weight_norm
 from torch_geometric.nn import GINConv, global_add_pool as gap
 from torch_geometric.nn import GCNConv, global_mean_pool as gep
 
@@ -43,16 +44,19 @@ class SnS(torch.nn.Module):
 
         elif 'att' in self.joint:
             kd_size = 8
-            if self.joint == 'joint_att':
+            if self.joint == 'bi_att':
+                self.jc = weight_norm(BANLayer(v_dim=107, q_dim=107, h_dim=jdim, h_out=2), name='h_mat', dim=None)
+            elif self.joint == 'joint_att':
                 self.jc = Joint_Attention_Module(107, jdim)
-            else:
+            elif self.joint == 'multi_att':
                 self.jc = Multi_Head_Attention()
+            else:
+                raise Exception('wrong att type')
 
         else:
             self.jc = Simple_Joint(self.joint)
             if self.joint != 'concat':
                 jdim = 128
-
 
         # 1D convolution on smiles sequence
         self.embedding_xd = nn.Embedding(num_features_xd + 1, embed_dim) # batch, 100, 128
@@ -103,9 +107,9 @@ class SnS(torch.nn.Module):
         if 'att' in self.joint:
             xj = self.jc(conv_xd, conv_xt)
         else:
+            # flatten
             xd = self.pool_xd(conv_xd)
             xd = self.fc1_xd(xd.view(-1, self.n_filters * 3)) # batch, 128
-
             xt = self.pool_xt(conv_xt)
             xt = self.fc1_xt(xt.view(-1, self.n_filters * 3)) # batch, 128
 
@@ -116,7 +120,7 @@ class SnS(torch.nn.Module):
         return out, y
 
 
-# d1 (graph) & d2 (seq) - GraphDTA
+# d1 (graph) & d2 (seq) - GraphDTA (att-DrugBAN)
 class GnS(torch.nn.Module):
     def __init__(self, n_output=1, num_features_xd=55, num_features_xt=25,
                  n_filters=32, embed_dim=128, output_dim=128, dropout=0.2, joint='concat'):
@@ -124,7 +128,10 @@ class GnS(torch.nn.Module):
         super(GnS, self).__init__()
 
         dim = 32
+        jdim = 256
         self.joint = joint
+        if self.joint in ['add', 'multiple']:
+            jdim = 128
 
         # GIN layers (drug)
         nn1_xd = Sequential(Linear(num_features_xd, dim), ReLU(), Linear(dim, dim))
@@ -143,31 +150,31 @@ class GnS(torch.nn.Module):
         self.conv4_xd = GINConv(nn4_xd)
         self.bn4_xd = torch.nn.BatchNorm1d(dim)
 
-        nn5_xd = Sequential(Linear(dim, dim), ReLU(), Linear(dim, dim))
-        self.conv5_xd = GINConv(nn5_xd)
-        self.bn5_xd = torch.nn.BatchNorm1d(dim)
+        if 'att' in self.joint:
+            nn5_xd = Sequential(Linear(dim, dim), ReLU(), Linear(dim, output_dim))
+            self.conv5_xd = GINConv(nn5_xd)
+            self.bn5_xd = torch.nn.BatchNorm1d(output_dim)
 
-        self.fc1_xd = Linear(dim, output_dim)
-
-        # 1D convolution on protein sequence
-        self.embedding_xt = nn.Embedding(num_features_xt + 1, embed_dim)
-        self.conv_xt_1 = nn.Conv1d(in_channels=1000, out_channels=n_filters, kernel_size=8) # batch, 32, 121
-        self.fc1_xt = nn.Linear(32*121, output_dim)
-
-        # joint
-        if self.joint in ['concat', 'bi', 'att']:
-            jdim = 256
+            self.protein_extractor = ProteinCNN(embedding_dim=128) # batch, 985, 128
+            self.jc = weight_norm(BANLayer(v_dim=128, q_dim=128, h_dim=jdim, h_out=2), name='h_mat', dim=None)
         else:
-            jdim = 128
+            nn5_xd = Sequential(Linear(dim, dim), ReLU(), Linear(dim, dim))
+            self.conv5_xd = GINConv(nn5_xd)
+            self.bn5_xd = torch.nn.BatchNorm1d(dim)
 
-        if self.joint in ['concat', 'add', 'multiple']:
-            self.jc = Simple_Joint(self.joint)
-        elif self.joint == 'bi':
-            self.jc = Bilinear_Joint(output_dim, jdim)
-        elif self.joint == 'att':
-            self.jc = Joint_Attention_Module(107)
-        else:
-            raise Exception(f'{self.joint} method not supported!!!')
+            self.fc1_xd = Linear(dim, output_dim)
+
+            # 1D convolution on protein sequence
+            self.embedding_xt = nn.Embedding(num_features_xt + 1, embed_dim)
+            self.conv_xt_1 = nn.Conv1d(in_channels=1000, out_channels=n_filters, kernel_size=8)  # batch, 32, 121
+            self.fc1_xt = nn.Linear(32 * 121, output_dim)
+
+            if self.joint in ['concat', 'add', 'multiple']:
+                self.jc = Simple_Joint(self.joint)
+            elif self.joint == 'bi':
+                self.jc = Bilinear_Joint(output_dim, jdim)
+            else:
+                raise Exception(f'{self.joint} method not supported!!!')
 
         # dense
         self.classifier = nn.Sequential(
@@ -196,17 +203,22 @@ class GnS(torch.nn.Module):
         xd = self.bn4_xd(xd)
         xd = F.relu(self.conv5_xd(xd, xd_ei))
         xd = self.bn5_xd(xd)
-        xd = gap(xd, xd_batch)
-        xd = F.relu(self.fc1_xd(xd))
-        xd = F.dropout(xd, p=0.2, training=self.training)
-
-        # protein
-        embedded_xt = self.embedding_xt(xt)
-        conv_xt = self.conv_xt_1(embedded_xt)
-        xt = self.fc1_xt(conv_xt.view(-1, 32 * 121))
 
         # joint
-        xj = self.jc(xd, xt)
+        if 'att' in self.joint:
+            xd = xd.view(len(y), -1, 128)
+            xt = self.protein_extractor(xt)
+            xj = self.jc(xd, xt)
+        else:
+            # flatten
+            xd = gap(xd, xd_batch)
+            xd = F.relu(self.fc1_xd(xd))
+            xd = F.dropout(xd, p=0.2, training=self.training)
+            embedded_xt = self.embedding_xt(xt)
+            conv_xt = self.conv_xt_1(embedded_xt)
+            xt = self.fc1_xt(conv_xt.view(-1, 32 * 121))
+
+            xj = self.jc(xd, xt)
 
         # dense
         out = self.classifier(xj).squeeze(1)
@@ -302,43 +314,48 @@ class GnG(torch.nn.Module):
 
         super(GnG, self).__init__()
 
+        jdim = 256
         self.joint = joint
+        if self.joint in ['add', 'multiple']:
+            jdim = 128
 
         # drug
         self.mol_conv1 = GCNConv(num_features_mol, num_features_mol)
         self.mol_conv2 = GCNConv(num_features_mol, num_features_mol * 2)
-        self.mol_conv3 = GCNConv(num_features_mol * 2, num_features_mol * 4)
-        self.mol_fc_g1 = torch.nn.Linear(num_features_mol * 4, 1024)
-        self.mol_fc_g2 = torch.nn.Linear(1024, output_dim)
 
         # protein
         self.pro_conv1 = GCNConv(num_features_pro, num_features_pro)
         self.pro_conv2 = GCNConv(num_features_pro, num_features_pro * 2)
-        self.pro_conv3 = GCNConv(num_features_pro * 2, num_features_pro * 4)
-        self.pro_fc_g1 = torch.nn.Linear(num_features_pro * 4, 1024)
-        self.pro_fc_g2 = torch.nn.Linear(1024, output_dim)
 
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(dropout)
 
         # joint
-        if self.joint in ['concat', 'bi', 'att']:
-            jdim = 256
+        if 'att' in self.joint:
+            self.mol_conv3 = GCNConv(num_features_mol * 2, output_dim)
+            self.pro_conv3 = GCNConv(num_features_pro * 2, output_dim)
+            self.jc = weight_norm(
+                BANLayer(v_dim=output_dim, q_dim=output_dim, h_dim=jdim, h_out=2), name='h_mat', dim=None)
         else:
-            jdim = 128
+            self.mol_conv3 = GCNConv(num_features_mol * 2, num_features_mol * 4)
+            self.pro_conv3 = GCNConv(num_features_pro * 2, num_features_pro * 4)
 
-        if self.joint in ['concat', 'add', 'multiple']:
-            self.jc = Simple_Joint(self.joint)
-        elif self.joint == 'bi':
-            self.jc = Bilinear_Joint(output_dim, jdim)
-        elif self.joint == 'att':
-            self.jc = Joint_Attention_Module(107)
-        else:
-            raise Exception(f'{self.joint} method not supported!!!')
+            # linear
+            self.mol_fc_g1 = torch.nn.Linear(num_features_mol * 4, 1024)
+            self.mol_fc_g2 = torch.nn.Linear(1024, output_dim)
+            self.pro_fc_g1 = torch.nn.Linear(num_features_pro * 4, 1024)
+            self.pro_fc_g2 = torch.nn.Linear(1024, output_dim)
+
+            if self.joint in ['concat', 'add', 'multiple']:
+                self.jc = Simple_Joint(self.joint)
+            elif self.joint == 'bi':
+                self.jc = Bilinear_Joint(output_dim, jdim)
+            else:
+                raise Exception(f'{self.joint} method not supported!!!')
 
         # dense
         self.classifier = nn.Sequential(
-            nn.Linear(256, 1024),
+            nn.Linear(jdim, 1024),
             nn.ReLU(),
             nn.Dropout(dropout),
             nn.Linear(1024, 512),
@@ -362,7 +379,13 @@ class GnG(torch.nn.Module):
         xt = self.relu(self.pro_conv2(xt, xt_ei))
         xt = self.relu(self.pro_conv3(xt, xt_ei))
 
-        if not self.joint == 'att':
+        # joint
+        if 'att' in self.joint:
+            batch_size = len(y)
+            xd = xd.view(batch_size, -1, 128)
+            xt = xt.view(batch_size, -1, 128)
+            xj = self.jc(xd, xt)
+        else:
             # flatten
             xd = gep(xd, xd_batch)  # global pooling
             xd = self.dropout(self.relu(self.mol_fc_g1(xd)))
@@ -372,9 +395,6 @@ class GnG(torch.nn.Module):
             xt = self.dropout(self.relu(self.pro_fc_g1(xt)))
             xt = self.dropout(self.pro_fc_g2(xt))
 
-            # joint
-            xj = self.jc(xd, xt)
-        else:
             xj = self.jc(xd, xt)
 
         # dense
@@ -383,7 +403,7 @@ class GnG(torch.nn.Module):
 
 
 ########################################################################################################################
-########## Joint functions
+########## Layers
 ########################################################################################################################
 
 
@@ -412,9 +432,10 @@ class Bilinear_Joint(nn.Module):
     def forward(self, xd, xt):
         return self.relu(self.bilinear(xd, xt))
 
+
 # AttentionDTA
 class Multi_Head_Attention(nn.Module):
-    def __init__(self, head = 8, conv=32, out_channels=128):
+    def __init__(self, head = 8, conv=32, out_channels=128, device='cpu'):
         super(Multi_Head_Attention, self).__init__()
         self.conv = conv
         self.head = head
@@ -422,8 +443,7 @@ class Multi_Head_Attention(nn.Module):
         self.tanh = nn.Tanh()
         self.d_a = nn.Linear(self.conv * 3, self.conv * 3 * head)
         self.p_a = nn.Linear(self.conv * 3, self.conv * 3 * head)
-        self.scale = torch.sqrt(torch.FloatTensor([self.conv * 3]))
-        # self.scale = torch.sqrt(torch.FloatTensor([self.conv * 3])).cuda()
+        self.scale = torch.sqrt(torch.FloatTensor([self.conv * 3])).to(device)
 
         self.pool = nn.AdaptiveAvgPool1d(1)
         self.fc = nn.Linear(self.conv * 3, out_channels)
@@ -471,30 +491,145 @@ class Joint_Attention_Module(nn.Module):
         return cp_embedding
 
 
+# DrugBAN (extract protein repr)
+class ProteinCNN(nn.Module):
+    def __init__(self, embedding_dim, padding=True):
+        super(ProteinCNN, self).__init__()
+        if padding:
+            self.embedding = nn.Embedding(26, embedding_dim, padding_idx=0)
+        else:
+            self.embedding = nn.Embedding(26, embedding_dim)
+        in_ch = [128] + [128, 128, 128]
+
+        self.in_ch = in_ch[-1]
+        kernels = [3, 6, 9]
+        self.conv1 = nn.Conv1d(in_channels=in_ch[0], out_channels=in_ch[1], kernel_size=kernels[0])
+        self.bn1 = nn.BatchNorm1d(in_ch[1])
+        self.conv2 = nn.Conv1d(in_channels=in_ch[1], out_channels=in_ch[2], kernel_size=kernels[1])
+        self.bn2 = nn.BatchNorm1d(in_ch[2])
+        self.conv3 = nn.Conv1d(in_channels=in_ch[2], out_channels=in_ch[3], kernel_size=kernels[2])
+        self.bn3 = nn.BatchNorm1d(in_ch[3])
+
+    def forward(self, v):
+        v = self.embedding(v.long())
+        v = v.transpose(2, 1)
+        v = self.bn1(F.relu(self.conv1(v)))
+        v = self.bn2(F.relu(self.conv2(v)))
+        v = self.bn3(F.relu(self.conv3(v)))
+        v = v.view(v.size(0), v.size(2), -1)
+        return v
 
 
+class BANLayer(nn.Module):
+    def __init__(self, v_dim, q_dim, h_dim, h_out, act='ReLU', dropout=0.2, k=3):
+        super(BANLayer, self).__init__()
 
-# g = Joint_Attention_Module(107)
-# g = Multi_Head_Attention()
-# a = torch.randn(5, 96, 107)
-# b = torch.randn(5, 96, 107)
-# print(a.shape, b.shape)
-# g(a, b)[1].shape
-# g(a, b).shape
+        self.c = 32
+        self.k = k # 3
+        self.v_dim = v_dim # 128
+        self.q_dim = q_dim # 128
+        self.h_dim = h_dim # 256
+        self.h_out = h_out # 2
 
+        # v_dim, q_dim = 128, h_dim = 256, k = 3
+        self.v_net = FCNet([v_dim, h_dim * self.k], act=act, dropout=dropout) # [128, 768]
+        self.q_net = FCNet([q_dim, h_dim * self.k], act=act, dropout=dropout) # [128, 768]
+        # self.dropout = nn.Dropout(dropout[1])
+        if 1 < k:
+            self.p_net = nn.AvgPool1d(self.k, stride=self.k)
+
+        if h_out <= self.c:
+            self.h_mat = nn.Parameter(torch.Tensor(1, h_out, 1, h_dim * self.k).normal_())
+            self.h_bias = nn.Parameter(torch.Tensor(1, h_out, 1, 1).normal_())
+        else:
+            self.h_net = weight_norm(nn.Linear(h_dim * self.k, h_out), dim=None)
+
+        self.bn = nn.BatchNorm1d(h_dim)
+
+    def attention_pooling(self, v, q, att_map):
+        fusion_logits = torch.einsum('bvk,bvq,bqk->bk', (v, att_map, q))
+        if 1 < self.k:
+            fusion_logits = fusion_logits.unsqueeze(1)  # b x 1 x d
+            fusion_logits = self.p_net(fusion_logits).squeeze(1) * self.k  # sum-pooling
+        return fusion_logits
+
+    def forward(self, v, q, softmax=False):
+        # print(v.shape, q.shape)
+        # print('====================================')
+        v_num = v.size(1) # v.size [batch_size(8), drug_representation = (290, hidden_dimension(128))]
+        q_num = q.size(1) # q.size [batch_size(8), protein_representation = (1185, hidden_dimension(128))]
+        if self.h_out <= self.c:
+            v_ = self.v_net(v) # 8, 290, 768
+            q_ = self.q_net(q) # 8, 1185, 768
+            att_maps = torch.einsum('xhyk,bvk,bqk->bhvq', (self.h_mat, v_, q_)) + self.h_bias
+            # print(self.h_mat.size()) # 1 2 1 768
+            # print(self.h_bias.size()) # 1 2 1 1
+            # print(att_maps.shape) # 8 2 290 1185
+
+        else:
+            v_ = self.v_net(v).transpose(1, 2).unsqueeze(3)
+            q_ = self.q_net(q).transpose(1, 2).unsqueeze(2)
+            d_ = torch.matmul(v_, q_)  # b x h_dim x v x q
+            att_maps = self.h_net(d_.transpose(1, 2).transpose(2, 3))  # b x v x q x h_out
+            att_maps = att_maps.transpose(2, 3).transpose(1, 2)  # b x h_out x v x q
+        if softmax:
+            p = nn.functional.softmax(att_maps.view(-1, self.h_out, v_num * q_num), 2)
+            att_maps = p.view(-1, self.h_out, v_num, q_num)
+        logits = self.attention_pooling(v_, q_, att_maps[:, 0, :, :])
+        # print(logits.shape) # 8, 256
+        for i in range(1, self.h_out):
+            logits_i = self.attention_pooling(v_, q_, att_maps[:, i, :, :])
+            logits += logits_i
+        logits = self.bn(logits)
+        # return logits, att_maps
+        return logits
+
+
+class FCNet(nn.Module):
+    """Simple class for non-linear fully connect network
+    Modified from https://github.com/jnhwkim/ban-vqa/blob/master/fc.py
+    """
+
+    def __init__(self, dims, act='ReLU', dropout=0):
+        super(FCNet, self).__init__()
+
+        # dims = [128, 768]
+        layers = []
+        for i in range(len(dims) - 2):
+            in_dim = dims[i]
+            out_dim = dims[i + 1]
+            if 0 < dropout:
+                layers.append(nn.Dropout(dropout))
+            layers.append(weight_norm(nn.Linear(in_dim, out_dim), dim=None))
+            if '' != act:
+                layers.append(getattr(nn, act)())
+        if 0 < dropout:
+            layers.append(nn.Dropout(dropout))
+        layers.append(weight_norm(nn.Linear(dims[-2], dims[-1]), dim=None))
+        if '' != act:
+            layers.append(getattr(nn, act)())
+
+        self.main = nn.Sequential(*layers)
+
+    def forward(self, x):
+        return self.main(x)
 
 # for batch in val_loader:
 #     break
-
+#
 # tmp = copy.deepcopy(batch)
-# sns = SnS(joint='bi')
+# sns = SnS(joint='b_att')
 # p, r = sns(tmp)
 # print(p.shape, r.shape)
 # sum(p.numel() for p in sns.parameters())
 
-# tmp[1].x.dtype
+# tmp = copy.deepcopy(batch)
+# sns = GnS(joint='att')
+# p, r = sns(tmp)
+# gap(p, r).shape
+# print(p.shape, r.shape)
 
 # tmp = copy.deepcopy(batch)
-# sns = GnS(joint='bi')
+# sns = GnG(joint='att')
 # p, r = sns(tmp)
 # print(p.shape, r.shape)

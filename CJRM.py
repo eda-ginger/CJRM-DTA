@@ -133,6 +133,7 @@ if __name__ == '__main__':
     parser.add_argument('--use_scheduler', action=argparse.BooleanOptionalAction, default=False)
 
     parser.add_argument('--one_shot', action=argparse.BooleanOptionalAction, default=False)
+    parser.add_argument('--virtual_node', action=argparse.BooleanOptionalAction, default=False)
 
     args = parser.parse_args()
 
@@ -152,18 +153,23 @@ if __name__ == '__main__':
     device = f'cuda:{args.use_cuda}' if torch.cuda.is_available() else 'cpu'
     use_scheduler = args.use_scheduler
     one_shot = args.one_shot
+    v_node = args.virtual_node
 
     ####################################################################################################################
     ########## Run
     ####################################################################################################################
 
     # # tmp
+    # data_folder = Path('./data/preprocessed/KIBA/random')
+    # data_name = 'KIBA'
+
     # data_folder = Path('./data/preprocessed/DAVIS/random')
+    # data_name = 'davis'
+
     # d1_type, d2_type = 'seq', 'seq'
     # d1_type, d2_type = 'seq', 'graph'
     # d1_type, d2_type = 'graph', 'seq'
     # d1_type, d2_type = 'graph', 'graph'
-    # data_name = 'davis'
     # project_name = 'Test1'
     # architecture = 'DSN'
     # batch_size = 12
@@ -177,6 +183,8 @@ if __name__ == '__main__':
     # n_workers = 0
     # joint = 'concat'
     # one_shot = True
+    # v_node = True
+    # v_node = False
 
     # output path
     today = str(date.today()).replace('-', '')
@@ -204,6 +212,7 @@ if __name__ == '__main__':
 
     logger.info(f'device: {device}')
     logger.info(f'use_scheduler: {use_scheduler}')
+    logger.info(f'virtual_node: {v_node}')
     logger.info(f'one_shot: {one_shot}')
 
     # load dataset
@@ -221,7 +230,7 @@ if __name__ == '__main__':
     if d1_type == 'seq':
         df_total['d1'] = df_total['Drug'].progress_apply(lambda x: integer_label_string(x, 'drug'))
     elif d1_type == 'graph':
-        df_total['d1'] = df_total['Drug'].progress_apply(drug_to_graph)
+        df_total['d1'] = df_total['Drug'].progress_apply(lambda x: drug_to_graph(x, v_node))
     else:
         raise Exception('d1_type must be either seq or graph')
 
@@ -231,7 +240,7 @@ if __name__ == '__main__':
         p_fd = Path(f'data/preprocessed/{data_name}/protein_graph_pyg')
         p_inform = pd.read_csv(p_fd / f"{data_name}_prot.csv")
         df_total['d2'] = df_total[['Target', 'Target_ID']].progress_apply(
-            lambda x: protein_to_graph(x, p_fd, p_inform), axis=1)
+            lambda x: protein_to_graph(x, p_fd, p_inform, v_node), axis=1)
     else:
         raise Exception('d2_type must be either seq or graph')
 
