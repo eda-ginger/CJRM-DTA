@@ -126,8 +126,8 @@ if __name__ == '__main__':
 
     parser.add_argument('--lr', type=float, default=1e-4, help='learning rate')
     parser.add_argument('--n_epochs', type=int, default=1000, help='num of epochs')
-    parser.add_argument('--n_workers', type=int, default=10, help='num of workers for dataset')
-    parser.add_argument('--batch_size', type=int, default=1024, help='batch size')
+    parser.add_argument('--n_workers', type=int, default=6, help='num of workers for dataset')
+    parser.add_argument('--batch_size', type=int, default=512, help='batch size')
     parser.add_argument('--weight_decay', type=float, default=5e-4)
     parser.add_argument('--use_cuda', type=int, default=0)
     parser.add_argument('--use_scheduler', action=argparse.BooleanOptionalAction, default=False)
