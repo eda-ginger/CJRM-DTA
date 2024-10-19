@@ -17,7 +17,23 @@ def split(s):
 
 ## multiple
 # # SnS, SnG
-cmd_lst = ['--data ./data/preprocessed/DAVIS/cold_split/Drug_and_Target --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_DT_GnS_bi --joint bi']
+cmd_lst = ['--data ./data/preprocessed/KIBA/random --d1_type seq --d2_type seq --data_name KIBA --project_name KIBA_random_SnS_ban --joint bi_att',
+
+           '--data ./data/preprocessed/DAVIS/random --d1_type seq --d2_type seq --data_name DAVIS --project_name DAVIS_random_SnS_ban --joint bi_att --',
+           '--data ./data/preprocessed/DAVIS/cold_split/Drug --d1_type seq --d2_type seq --data_name DAVIS --project_name DAVIS_cold_drug_SnS_ban --joint bi_att',
+           '--data ./data/preprocessed/DAVIS/cold_split/Target --d1_type seq --d2_type seq --data_name DAVIS --project_name DAVIS_cold_target_SnS_ban --joint bi_att',
+           '--data ./data/preprocessed/DAVIS/cold_split/Drug_and_Target --d1_type seq --d2_type seq --data_name DAVIS --project_name DAVIS_cold_DT_SnS_ban --joint bi_att',
+
+           '--data ./data/preprocessed/DAVIS/random --d1_type seq --d2_type seq --data_name DAVIS --project_name DAVIS_random_SnS_mgt --joint joint_att',
+           '--data ./data/preprocessed/DAVIS/cold_split/Drug --d1_type seq --d2_type seq --data_name DAVIS --project_name DAVIS_cold_drug_SnS_mgt --joint joint_att',
+           '--data ./data/preprocessed/DAVIS/cold_split/Target --d1_type seq --d2_type seq --data_name DAVIS --project_name DAVIS_cold_target_SnS_mgt --joint joint_att',
+           '--data ./data/preprocessed/DAVIS/cold_split/Drug_and_Target --d1_type seq --d2_type seq --data_name DAVIS --project_name DAVIS_cold_DT_SnS_mgt --joint joint_att',
+
+           '--data ./data/preprocessed/KIBA/random --d1_type seq --d2_type seq --data_name KIBA --project_name KIBA_random_SnS_mgt --joint joint_att'
+           ]
+
+
+
 
 import time
 for command in cmd_lst:
@@ -66,6 +82,9 @@ finish(f'\nAll job finished successfully!')
 # '--data ./data/preprocessed/DAVIS/cold_split/Target --d1_type seq --d2_type seq --data_name DAVIS --project_name DAVIS_cold_target_SnS_bi --joint bi',
 # '--data ./data/preprocessed/DAVIS/cold_split/Drug_and_Target --d1_type seq --d2_type seq --data_name DAVIS --project_name DAVIS_cold_DT_SnS_bi --joint bi',
 
+# '--data ./data/preprocessed/DAVIS/cold_split/Drug_and_Target --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_DT_GnS_bi --joint bi'
+# '--data ./data/preprocessed/DAVIS/cold_split/Target --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_target_GnS_bi --joint bi --use_cuda 1'
+
 ## Addiction
 # '--data ./data/preprocessed/DAVIS/random --d1_type seq --d2_type seq --data_name DAVIS --project_name DAVIS_random_SnS_add --joint add',
 # '--data ./data/preprocessed/DAVIS/cold_split/Drug --d1_type seq --d2_type seq --data_name DAVIS --project_name DAVIS_cold_drug_SnS_add --joint add',
@@ -75,3 +94,4 @@ finish(f'\nAll job finished successfully!')
 # '--data ./data/preprocessed/DAVIS/cold_split/Drug --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_drug_GnS_add --joint add',
 # '--data ./data/preprocessed/DAVIS/cold_split/Target --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_target_GnS_add --joint add',
 # '--data ./data/preprocessed/DAVIS/cold_split/Drug_and_Target --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_DT_GnS_add --joint add'
+
