@@ -16,10 +16,7 @@ def split(s):
     return params
 
 
-cmd_lst = ['--data ./data/preprocessed/DAVIS/random --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_random_GnS_bi --joint bi --use_cuda 1',
-           '--data ./data/preprocessed/DAVIS/cold_split/Drug --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_drug_GnS_bi --joint bi --use_cuda 1',
-           '--data ./data/preprocessed/DAVIS/cold_split/Target --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_target_GnS_bi --joint bi --use_cuda 1',
-           ]
+cmd_lst = ['--data ./data/preprocessed/DAVIS/cold_split/Target --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_target_GnS_bi --joint bi --use_cuda 1']
 
 
 import time
