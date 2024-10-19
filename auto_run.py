@@ -17,7 +17,7 @@ def split(s):
 
 ## multiple
 # # SnS, SnG
-cmd_lst = []
+cmd_lst = ['--data ./data/preprocessed/DAVIS/cold_split/Drug_and_Target --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_DT_GnS_bi --joint bi']
 
 import time
 for command in cmd_lst:
