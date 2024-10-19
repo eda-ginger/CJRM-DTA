@@ -16,7 +16,7 @@ def split(s):
     return params
 
 
-cmd_lst = ['--data ./data/preprocessed/KIBA/random --d1_type graph --d2_type seq --data_name KIBA --project_name KIBA_random_GnS_ban --use_cuda 1 --joint bi_att --one_shot --virtual_node',
+cmd_lst = ['--data ./data/preprocessed/KIBA/random --d1_type graph --d2_type seq --data_name KIBA --project_name KIBA_random_GnS_ban --use_cuda 1 --joint bi_att --one_shot --virtual_node --n_workers 5',
 
            '--data ./data/preprocessed/DAVIS/random --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_random_GnS_ban --joint bi_att --use_cuda 1 --virtual_node',
            '--data ./data/preprocessed/DAVIS/cold_split/Drug --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_drug_GnS_ban --joint bi_att --use_cuda 1 --virtual_node',
