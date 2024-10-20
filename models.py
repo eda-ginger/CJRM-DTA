@@ -438,7 +438,7 @@ class Bilinear_Joint(nn.Module):
 
 # AttentionDTA
 class Multi_Head_Attention(nn.Module):
-    def __init__(self, head = 8, conv=32, out_channels=128, device='cpu'):
+    def __init__(self, head = 8, conv=32, out_channels=128, device='cuda:0'):
         super(Multi_Head_Attention, self).__init__()
         self.conv = conv
         self.head = head
