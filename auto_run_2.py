@@ -16,10 +16,8 @@ def split(s):
     return params
 
 
-cmd_lst = ['--data ./data/preprocessed/DAVIS/random --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_random_GnS_ban --joint bi_att --use_cuda 1 --virtual_node',
-           '--data ./data/preprocessed/DAVIS/cold_split/Drug --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_drug_GnS_ban --joint bi_att --use_cuda 1 --virtual_node',
-           '--data ./data/preprocessed/DAVIS/cold_split/Target --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_target_GnS_ban --joint bi_att --use_cuda 1 --virtual_node',
-           '--data ./data/preprocessed/DAVIS/cold_split/Drug_and_Target --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_DT_GnS_ban --joint bi_att --use_cuda 1 --virtual_node',
+cmd_lst = ['--data ./data/preprocessed/DAVIS/cold_split/Target --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_target_GnS_ban --joint bi_att --use_cuda 1 --virtual_node --n_workers 4 --batch_size 256',
+           '--data ./data/preprocessed/DAVIS/cold_split/Drug_and_Target --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_DT_GnS_ban --joint bi_att --use_cuda 1 --virtual_node --n_workers 4 --batch_size 256'
            ]
 
 
@@ -51,3 +49,5 @@ finish(f'\nAll job finished successfully!')
 # '--data ./data/preprocessed/KIBA/random --d1_type graph --d2_type seq --data_name KIBA --project_name KIBA_random_GnS_add --use_cuda 1 --joint add --one_shot'
 
 
+# '--data ./data/preprocessed/DAVIS/random --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_random_GnS_ban --joint bi_att --use_cuda 1 --virtual_node',
+# '--data ./data/preprocessed/DAVIS/cold_split/Drug --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_drug_GnS_ban --joint bi_att --use_cuda 1 --virtual_node',
