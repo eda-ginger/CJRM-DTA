@@ -25,7 +25,7 @@ cmd_lst = ['--data ./data/preprocessed/KIBA/random --d1_type seq --d2_type seq -
            '--data ./data/preprocessed/DAVIS/cold_split/Drug_and_Target --d1_type seq --d2_type seq --data_name DAVIS --project_name DAVIS_cold_DT_SnS_MHA --joint multi_att',
            '--data ./data/preprocessed/KIBA/random --d1_type seq --d2_type seq --data_name KIBA --project_name KIBA_random_SnS_MHA --joint multi_att',
 
-           '--data ./data/preprocessed/KIBA/random --d1_type graph --d2_type seq --data_name KIBA --project_name KIBA_random_GnS_ban --joint bi_att --one_shot --virtual_node',
+           '--data ./data/preprocessed/KIBA/random --d1_type graph --d2_type seq --data_name KIBA --project_name KIBA_random_GnS_ban --joint bi_att --one_shot --virtual_node'
            ]
 
 # '--data ./data/preprocessed/KIBA/random --d1_type seq --d2_type seq --data_name KIBA --project_name KIBA_random_SnS_ban --joint bi_att --one_shot',
