@@ -63,16 +63,19 @@ class SnS(torch.nn.Module):
         self.conv_xd_1 = nn.Conv1d(in_channels=100, out_channels=n_filters, kernel_size=kd_size) # batch, 32, 125
         self.conv_xd_2 = nn.Conv1d(in_channels=n_filters, out_channels=n_filters * 2, kernel_size=kd_size) # batch, 64, 122
         self.conv_xd_3 = nn.Conv1d(in_channels=n_filters * 2, out_channels=n_filters * 3, kernel_size=kd_size) # batch, 96, 119
-        self.pool_xd = nn.AdaptiveMaxPool1d(1) # batch, 96, 1
-        self.fc1_xd = nn.Linear(n_filters * 3, output_dim) # batch, 128
 
         # 1D convolution on protein sequence
         self.embedding_xt = nn.Embedding(num_features_xt + 1, embed_dim) # batch, 1000, 128
         self.conv_xt_1 = nn.Conv1d(in_channels=1000, out_channels=n_filters, kernel_size=8) # batch, 32, 121
         self.conv_xt_2 = nn.Conv1d(in_channels=n_filters, out_channels=n_filters * 2, kernel_size=8) # batch, 64, 114
         self.conv_xt_3 = nn.Conv1d(in_channels=n_filters * 2, out_channels=n_filters * 3, kernel_size=8) # batch, 96, 107
-        self.pool_xt = nn.AdaptiveMaxPool1d(1) # batch, 96, 1
-        self.fc1_xt = nn.Linear(n_filters * 3, output_dim) # batch, 128
+
+        if not 'att' in self.joint:
+            self.pool_xd = nn.AdaptiveMaxPool1d(1)  # batch, 96, 1
+            self.fc1_xd = nn.Linear(n_filters * 3, output_dim)  # batch, 128
+
+            self.pool_xt = nn.AdaptiveMaxPool1d(1)  # batch, 96, 1
+            self.fc1_xt = nn.Linear(n_filters * 3, output_dim)  # batch, 128
 
         # dense
         self.classifier = nn.Sequential(
@@ -618,7 +621,7 @@ class FCNet(nn.Module):
 #     break
 #
 # tmp = copy.deepcopy(batch)
-# sns = SnS(joint='b_att')
+# sns = SnS(joint='bi_att')
 # p, r = sns(tmp)
 # print(p.shape, r.shape)
 # sum(p.numel() for p in sns.parameters())
