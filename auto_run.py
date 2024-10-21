@@ -17,7 +17,7 @@ def split(s):
 
 ## multiple
 # # SnS, SnG
-cmd_lst = ['--data ./data/preprocessed/KIBA/random --d1_type seq --d2_type seq --data_name KIBA --project_name KIBA_random_SnS_mgt --joint joint_att --one_shot --n_workers 8 --batch_size 512',
+cmd_lst = ['--data ./data/preprocessed/KIBA/random --d1_type seq --d2_type seq --data_name KIBA --project_name KIBA_random_SnS_mgt --joint joint_att --n_workers 10 --batch_size 512',
            '--data ./data/preprocessed/DAVIS/cold_split/Drug_and_Target --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_DT_GnS_ban --joint bi_att --virtual_node --n_workers 4 --batch_size 256'
            ]
 
