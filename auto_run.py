@@ -17,8 +17,8 @@ def split(s):
 
 ## multiple
 # # SnS, SnG
-cmd_lst = ['--data ./data/preprocessed/KIBA/random --d1_type seq --d2_type seq --data_name KIBA --project_name KIBA_random_SnS_MHA --joint multi_att',
-           '--data ./data/preprocessed/KIBA/random --d1_type seq --d2_type seq --data_name KIBA --project_name KIBA_random_SnS_mgt --joint joint_att'
+cmd_lst = ['--data ./data/preprocessed/KIBA/random --d1_type seq --d2_type seq --data_name KIBA --project_name KIBA_random_SnS_MHA --joint multi_att --one_shot',
+           '--data ./data/preprocessed/KIBA/random --d1_type seq --d2_type seq --data_name KIBA --project_name KIBA_random_SnS_mgt --joint joint_att --one_shot'
            ]
 
 # '--data ./data/preprocessed/KIBA/random --d1_type seq --d2_type seq --data_name KIBA --project_name KIBA_random_SnS_ban --joint bi_att --one_shot',
