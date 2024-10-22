@@ -17,9 +17,10 @@ def split(s):
 
 ## multiple
 # # SnS, SnG
-cmd_lst = ['--data ./data/preprocessed/DAVIS/cold_split/Drug_and_Target --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_DT_GnS_ban --joint bi_att --virtual_node --n_workers 4 --batch_size 256',
-           '--data ./data/preprocessed/KIBA/random --d1_type seq --d2_type seq --data_name KIBA --project_name KIBA_random_SnS_mgt --joint joint_att --one_shot --n_workers 6 --batch_size 512',
-           ]
+cmd_lst = ['--data ./data/preprocessed/KIBA/random --d1_type seq --d2_type seq --data_name KIBA --project_name KIBA_random_SnS_mgt --joint joint_att_slience --one_shot --n_workers 4 --batch_size 128']
+
+# '--data ./data/preprocessed/DAVIS/cold_split/Drug_and_Target --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_DT_GnS_ban --joint bi_att --virtual_node --n_workers 4 --batch_size 256',
+# --data ./data/preprocessed/DAVIS/cold_split/Drug_and_Target --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_DT_GnS_ban_server_22 --joint bi_att --virtual_node --n_workers 4 --batch_size 128 --use_cuda 7
 
 # '--data ./data/preprocessed/KIBA/random --d1_type seq --d2_type seq --data_name KIBA --project_name KIBA_random_SnS_ban --joint bi_att --one_shot',
 

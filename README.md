@@ -15,7 +15,6 @@ pip install pyg_lib torch_scatter torch_sparse torch_cluster torch_spline_conv -
 pip install dgl -f https://data.dgl.ai/wheels/cu124/repo.html
 pip install rdkit deepchem tqdm
 
-# custom
 pip install knockknock jupyter
 conda install conda-forge::pytdc -y
 ```

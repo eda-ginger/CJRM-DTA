@@ -16,10 +16,12 @@ def split(s):
     return params
 
 
-cmd_lst = ['--data ./data/preprocessed/DAVIS/cold_split/Target --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_target_GnS_ban --joint bi_att --virtual_node --n_workers 4 --batch_size 128 --one_shot'
+cmd_lst = ['--data ./data/preprocessed/KIBA/random --d1_type graph --d2_type seq --data_name KIBA --project_name KIBA_random_GnS_ban --joint bi_att_slience --one_shot --virtual_node --n_workers 4 --batch_size 128 --use_cuda 1'
            ]
 
-# '--data ./data/preprocessed/KIBA/random --d1_type graph --d2_type seq --data_name KIBA --project_name KIBA_random_GnS_ban --joint bi_att --one_shot --virtual_node --n_workers 4 --batch_size 128 --use_cuda 1',
+# --data ./data/preprocessed/DAVIS/cold_split/Target --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_target_GnS_ban_server22 --joint bi_att --virtual_node --n_workers 4 --batch_size 128 --one_shot
+
+
 
 import time
 for command in cmd_lst:
@@ -51,3 +53,5 @@ finish(f'\nAll job finished successfully!')
 
 # '--data ./data/preprocessed/DAVIS/random --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_random_GnS_ban --joint bi_att --use_cuda 1 --virtual_node',
 # '--data ./data/preprocessed/DAVIS/cold_split/Drug --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_drug_GnS_ban --joint bi_att --use_cuda 1 --virtual_node',
+
+# '--data ./data/preprocessed/DAVIS/cold_split/Target --d1_type graph --d2_type seq --data_name DAVIS --project_name DAVIS_cold_target_GnS_ban --joint bi_att --virtual_node --n_workers 4 --batch_size 128 --one_shot --use_cuda 4'
