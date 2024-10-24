@@ -135,8 +135,6 @@ if __name__ == '__main__':
     parser.add_argument('--one_shot', action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument('--virtual_node', action=argparse.BooleanOptionalAction, default=False)
 
-    parser.add_argument('--cuda_visible', action=argparse.BooleanOptionalAction, default=False)
-
     args = parser.parse_args()
 
     data_folder = Path(args.data)
@@ -152,10 +150,7 @@ if __name__ == '__main__':
     batch_size = args.batch_size
     weight_decay = args.weight_decay
 
-    if args.cuda_visible:
-        device = f'cuda'
-    else:
-        device = f'cuda:{args.use_cuda}' if torch.cuda.is_available() else 'cpu'
+    device = f'cuda:{args.use_cuda}' if torch.cuda.is_available() else 'cpu'
     use_scheduler = args.use_scheduler
     one_shot = args.one_shot
     v_node = args.virtual_node
