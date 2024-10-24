@@ -16,9 +16,11 @@ def split(s):
     return params
 
 cuda_num = 1
-cmd_lst = [f"--data ./data/preprocessed/DAVIS/cold_split/Drug --d1_type graph --d2_type seq --data_name DAVIS --project_name GraphDTA_CD_MHA-Cross_16-1 --virtual_node --joint cross_att --use_cuda {cuda_num}",
-           f"--data ./data/preprocessed/DAVIS/cold_split/Target --d1_type graph --d2_type seq --data_name DAVIS --project_name GraphDTA_CT_MHA-Cross_16-1 --virtual_node --joint cross_att --use_cuda {cuda_num}"
-           ]
+# f"--data ./data/preprocessed/DAVIS/cold_split/Drug --d1_type graph --d2_type seq --data_name DAVIS --project_name GraphDTA_CD_MHA-Cross_16-1 --virtual_node --joint cross_att --use_cuda {cuda_num}",
+# f"--data ./data/preprocessed/DAVIS/cold_split/Target --d1_type graph --d2_type seq --data_name DAVIS --project_name GraphDTA_CT_MHA-Cross_16-1 --virtual_node --joint cross_att --use_cuda {cuda_num}"
+
+cmd_lst = [f"--data ./data/preprocessed/DAVIS/cold_split/Drug_and_Target --d1_type graph --d2_type seq --data_name DAVIS --project_name GraphDTA_CDT_MHA-Co_23-1 --virtual_node --joint co_att --use_cuda {cuda_num}"]
+
 
 import time
 for command in cmd_lst:
