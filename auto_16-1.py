@@ -17,12 +17,8 @@ def split(s):
 
 
 cuda_num = 1
-cmd_lst = [f"--data ./data/preprocessed/DAVIS/cold_split/Drug --d1_type graph --d2_type seq --data_name DAVIS --project_name GraphDTA_CD_BAN --virtual_node --joint bi_att --use_cuda {cuda_num}",
-           f"--data ./data/preprocessed/DAVIS/cold_split/Drug --d1_type graph --d2_type seq --data_name DAVIS --project_name GraphDTA_CD_MHA-Co --virtual_node --joint co_att --use_cuda {cuda_num}",
-           f"--data ./data/preprocessed/DAVIS/cold_split/Drug --d1_type graph --d2_type seq --data_name DAVIS --project_name GraphDTA_CD_MHA-Cross --virtual_node --joint cross_att --use_cuda {cuda_num}",
-           f"--data ./data/preprocessed/DAVIS/cold_split/Target --d1_type graph --d2_type seq --data_name DAVIS --project_name GraphDTA_CT_BAN --virtual_node --joint bi_att --use_cuda {cuda_num}"
-           f"--data ./data/preprocessed/DAVIS/cold_split/Target --d1_type graph --d2_type seq --data_name DAVIS --project_name GraphDTA_CT_MHA-Cross --virtual_node --joint cross_att --use_cuda {cuda_num}"
-           ]
+# f"--data ./data/preprocessed/DAVIS/cold_split/Drug --d1_type graph --d2_type seq --data_name DAVIS --project_name GraphDTA_CD_BAN --virtual_node --joint bi_att --use_cuda {cuda_num}",
+cmd_lst = [f"--data ./data/preprocessed/DAVIS/cold_split/Drug --d1_type graph --d2_type seq --data_name DAVIS --project_name GraphDTA_CD_MHA-Co --virtual_node --joint co_att --use_cuda {cuda_num}"]
 
 import time
 for command in cmd_lst:
