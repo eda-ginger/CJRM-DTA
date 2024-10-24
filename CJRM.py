@@ -289,12 +289,12 @@ if __name__ == '__main__':
         # Define model
         if d1_type == 'seq' and d2_type == 'seq':
             model = SnS(joint=joint)
-        elif d1_type == 'seq' and d2_type == 'graph':
-            model = SnG(joint=joint)
+        # elif d1_type == 'seq' and d2_type == 'graph':
+        #     model = SnG(joint=joint)
         elif d1_type == 'graph' and d2_type == 'seq':
             model = GnS(joint=joint)
-        elif d1_type == 'graph' and d2_type == 'graph':
-            model = GnG(joint=joint)
+        # elif d1_type == 'graph' and d2_type == 'graph':
+        #     model = GnG(joint=joint)
         else:
             raise Exception('type must be either seq or graph')
 
