@@ -135,6 +135,9 @@ if __name__ == '__main__':
     parser.add_argument('--one_shot', action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument('--virtual_node', action=argparse.BooleanOptionalAction, default=False)
 
+    parser.add_argument('--seed', type=int, default=0, help='random seed')
+
+
     args = parser.parse_args()
 
     data_folder = Path(args.data)
@@ -154,6 +157,8 @@ if __name__ == '__main__':
     use_scheduler = args.use_scheduler
     one_shot = args.one_shot
     v_node = args.virtual_node
+
+    init_seed = args.seed
 
     ####################################################################################################################
     ########## Run
@@ -263,10 +268,13 @@ if __name__ == '__main__':
     start = time.time()
     total_results = []
 
-    if one_shot:
-        seeds = [42]
+    if init_seed != 0:
+        seeds = [init_seed]
     else:
-        seeds = [5, 42, 76]
+        if one_shot:
+            seeds = [42]
+        else:
+            seeds = [5, 42, 76]
 
     for seed in seeds:
         logger.info(f"#####" * 20)
