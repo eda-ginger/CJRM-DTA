@@ -16,21 +16,20 @@ def split(s):
     return params
 
 
-cuda_num = 0
-cmd_lst = [f"--data ./data/preprocessed/DAVIS/cold_split/Target --d1_type graph --d2_type seq --data_name DAVIS --project_name GraphDTA_CT_BAN --virtual_node --joint bi_att --use_cuda {cuda_num}",
-           f"--data ./data/preprocessed/DAVIS/cold_split/Target --d1_type graph --d2_type seq --data_name DAVIS --project_name GraphDTA_CT_MHA-Co --virtual_node --joint co_att --use_cuda {cuda_num}",
-           f"--data ./data/preprocessed/DAVIS/cold_split/Target --d1_type graph --d2_type seq --data_name DAVIS --project_name GraphDTA_CT_MHA-Cross --virtual_node --joint cross_att --use_cuda {cuda_num}",
-           f"--data ./data/preprocessed/DAVIS/cold_split/Drug_and_Target --d1_type graph --d2_type seq --data_name DAVIS --project_name GraphDTA_CDT_BAN --virtual_node --joint bi_att --use_cuda {cuda_num}",
-           f"--data ./data/preprocessed/DAVIS/cold_split/Drug_and_Target --d1_type graph --d2_type seq --data_name DAVIS --project_name GraphDTA_CDT_MHA-Co --virtual_node --joint co_att --use_cuda {cuda_num}",
-           f"--data ./data/preprocessed/DAVIS/cold_split/Drug_and_Target --d1_type graph --d2_type seq --data_name DAVIS --project_name GraphDTA_CDT_MHA-Cross --virtual_node --joint cross_att --use_cuda {cuda_num}"
+cuda_num = 1
+cmd_lst = [f"--data ./data/preprocessed/DAVIS/cold_split/Drug --d1_type graph --d2_type seq --data_name DAVIS --project_name GraphDTA_CD_BAN --virtual_node --joint bi_att --use_cuda {cuda_num}",
+           f"--data ./data/preprocessed/DAVIS/cold_split/Drug --d1_type graph --d2_type seq --data_name DAVIS --project_name GraphDTA_CD_MHA-Co --virtual_node --joint co_att --use_cuda {cuda_num}",
+           f"--data ./data/preprocessed/DAVIS/cold_split/Drug --d1_type graph --d2_type seq --data_name DAVIS --project_name GraphDTA_CD_MHA-Cross --virtual_node --joint cross_att --use_cuda {cuda_num}",
+           f"--data ./data/preprocessed/DAVIS/cold_split/Target --d1_type graph --d2_type seq --data_name DAVIS --project_name GraphDTA_CT_BAN --virtual_node --joint bi_att --use_cuda {cuda_num}"
+           f"--data ./data/preprocessed/DAVIS/cold_split/Target --d1_type graph --d2_type seq --data_name DAVIS --project_name GraphDTA_CT_MHA-Cross --virtual_node --joint cross_att --use_cuda {cuda_num}"
            ]
 
 import time
 for command in cmd_lst:
     start = time.time()
-    finish(f'\nstarting {command}\n - server 16-0')
+    finish(f'\nstarting {command}\n - server 16-1')
     subprocess.run(args=[sys.executable, 'CJRM.py'] + split(command))
 
     f_time = time.strftime("%H:%M:%S", time.gmtime(time.time() - start))
-    finish(f'\nFinished: {command}\nLearning time: {f_time} - server 16-0')
+    finish(f'\nFinished: {command}\nLearning time: {f_time} - server 16-1')
 finish(f'\nAll job finished successfully!')
