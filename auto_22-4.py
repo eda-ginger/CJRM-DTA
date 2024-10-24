@@ -17,8 +17,8 @@ def split(s):
 
 
 cuda_num = 4
-cmd_lst = [f"--data ./data/preprocessed/DAVIS/random --d1_type seq --d2_type seq --data_name DAVIS --project_name DeepDTA_random_BAN --joint bi_att --use_cuda {cuda_num}",
-           f"--data ./data/preprocessed/DAVIS/random --d1_type seq --d2_type seq --data_name DAVIS --project_name DeepDTA_random_MHA-Co --joint co_att --use_cuda {cuda_num}",
+# f"--data ./data/preprocessed/DAVIS/random --d1_type seq --d2_type seq --data_name DAVIS --project_name DeepDTA_random_BAN --joint bi_att --use_cuda {cuda_num}",
+cmd_lst = [f"--data ./data/preprocessed/DAVIS/random --d1_type seq --d2_type seq --data_name DAVIS --project_name DeepDTA_random_MHA-Co --joint co_att --use_cuda {cuda_num}",
            f"--data ./data/preprocessed/DAVIS/random --d1_type seq --d2_type seq --data_name DAVIS --project_name DeepDTA_random_MHA-Cross --joint cross_att --use_cuda {cuda_num}",
            f"--data ./data/preprocessed/DAVIS/cold_split/Drug_and_Target --d1_type graph --d2_type seq --data_name DAVIS --project_name GraphDTA_CDT_BAN --virtual_node --joint bi_att --use_cuda {cuda_num}"
            ]
