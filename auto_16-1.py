@@ -16,7 +16,7 @@ def split(s):
     return params
 
 
-cuda_num = 1
+cuda_num = 0
 cmd_lst = [f"--data ./data/preprocessed/DAVIS/cold_split/Drug --d1_type graph --d2_type seq --data_name DAVIS --project_name GraphDTA_CD_BAN --virtual_node --joint bi_att --use_cuda {cuda_num}",
            f"--data ./data/preprocessed/DAVIS/cold_split/Drug --d1_type graph --d2_type seq --data_name DAVIS --project_name GraphDTA_CD_MHA-Co --virtual_node --joint co_att --use_cuda {cuda_num}",
            f"--data ./data/preprocessed/DAVIS/cold_split/Drug --d1_type graph --d2_type seq --data_name DAVIS --project_name GraphDTA_CD_MHA-Cross --virtual_node --joint cross_att --use_cuda {cuda_num}",
